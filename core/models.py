@@ -1,4 +1,4 @@
-""""""
+"""Файл со всеми моделями БД"""
 from django.db import models
 from django.contrib.auth.models import User
 
