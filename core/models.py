@@ -83,6 +83,7 @@ class PriceHistory(models.Model):
     class Meta:
         ordering = ['-checked_at']
         unique_together = (('offer', 'checked_at'),)
+        verbose_name_plural = 'PriceHistories'
 
 
 class Subscription(models.Model):
