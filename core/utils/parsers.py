@@ -1,6 +1,7 @@
 """Модуль со всеми функциями для парсинга и вспомогательными функциями для парсинга"""
 import time
 import re
+import datetime
 
 from selenium import webdriver, common
 from selenium.webdriver.chrome.options import Options
@@ -85,26 +86,6 @@ def get_driver() -> webdriver.Chrome:
     return driver
 
 
-def check_availability(card, mp: str) -> bool:
-    """
-    Проверяет есть ли товар в наличии при поиске
-
-    :param card: HTML-разметка карты товара
-    :param mp: Маркетплейс, на котором ищем
-    :type mp: str
-    :return: В наличии товар или нет
-    :rtype: bool
-    """
-    try:
-        if mp == 'ozon':
-            ...
-        elif mp == 'wb':
-            card.find_element(By.CSS_SELECTOR, 'a.product-card__add-basket')
-        return True
-    except common.NoSuchElementException:
-        return False
-
-
 def extract_ozon_sku(url: str) -> str | None:
     """
     Достает артикул из ссылки Ozon на товар
@@ -139,25 +120,34 @@ def price_in_float(price: str) -> float | None:
         return None
 
 
-def update_availability(dr: webdriver.Chrome, mp: str) -> bool:
+def str_in_date(str_date: str) -> datetime.date:
     """
-    Проверяет есть ли товар в наличии при обновлении
+    Превращает строку с датой доставки в объект даты
 
-    :param dr: Драйвер браузера
-    :type dr: webdriver.Chrome
-    :param mp: Маркетплейс, на котором проверяем
-    :type mp: str
-    :return: Есть ли в наличии обновляемый товар
-    :rtype: bool
+    :param str_date: Строка с датой
+    :type str_date: str
+    :return: Готовый объект даты
+    :rtype: datetime.date
     """
-    if mp == 'ozon':
-        ...
-    elif mp == 'wb':
-        try:
-            dr.find_element(By.CSS_SELECTOR, 'button.buyNowButton--akeKg')
-            return True
-        except common.NoSuchElementException:
-            return False
+    months = {
+        'января': 1, 'февраля': 2, 'марта': 3, 'апреля': 4,
+        'мая': 5, 'июня': 6, 'июля': 7, 'августа': 8,
+        'сентября': 9, 'октября': 10, 'ноября': 11, 'декабря': 12
+    }
+    try:
+        if str_date.capitalize() == 'Завтра':
+            return datetime.date.today() + datetime.timedelta(days=1)
+        elif str_date.capitalize() == 'Послезавтра':
+            return datetime.date.today() + datetime.timedelta(days=2)
+        else:
+            match = re.match(r'(\d{1,2})\s+(\w+)', str_date)
+            day = int(match.group(1))
+            month_name = match.group(2)
+            month = months[month_name]
+            current_year = datetime.datetime.now().year
+            return datetime.date(current_year, month, day)
+    except Exception:
+        return datetime.date.today() + datetime.timedelta(days=60)
 
 
 class WbParser:
@@ -165,20 +155,109 @@ class WbParser:
     Парсер данных о товарах с ВБ
     """
     @staticmethod
-    def search_wb(query: str) -> list[dict[str, str | bool | float]]:
-        """Поиск товаров на ВБ
+    def _open_filter_menu(dr: webdriver.Chrome) -> None:
+        """
+        Открывает меню со всеми фильтрами.
+        Вспомогательный метод для основного парсинга
+
+        :param dr: Драйвеп браузера
+        :type dr: webdriver.Chrome
+        """
+        filter_btn = dr.find_element(By.CSS_SELECTOR, 'button.dropdown-filter__btn--all')
+        filter_btn.click()
+
+    @staticmethod
+    def _apply_used_filters(dr: webdriver.Chrome) -> None:
+        """
+        Применяет установленные фильтры.
+        Вспомогательный метод для основного парсинга
+
+        :param dr: _description_
+        :type dr: webdriver.Chrome
+        """
+        apply_btn = WebDriverWait(dr, 5).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "button.filters-desktop__btn-main"))
+        )
+        apply_btn.click()
+
+    @staticmethod
+    def _use_price_limit(dr: webdriver.Chrome, limit: list[int]) -> None:
+        """
+        Добавление диапозона цен при парсинге по названию.
+        Вспомогательный метод для основного парсинга
+
+        :param dr: Драйвер браузера
+        :type dr: webdriver.Chrome
+        :param limit: Диапозон цен
+        :type limit: list[int]
+        """
+        left_limit = WebDriverWait(dr, 5).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "input[name='startN']"))
+        )
+        left_limit.clear()
+        left_limit.send_keys(str(limit[0]))
+
+        right_limit = WebDriverWait(dr, 5).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "input[name='endN']"))
+        )
+        right_limit.clear()
+        right_limit.send_keys(str(limit[-1]))
+
+    @staticmethod
+    def _update_availability(dr: webdriver.Chrome) -> bool:
+        """
+        Проверяет есть ли товар в наличии при обновлении.
+        Вспомогательный метод для основного парсинга
+
+        :param dr: Драйвер браузера
+        :type dr: webdriver.Chrome
+        :return: Есть ли в наличии обновляемый товар
+        :rtype: bool
+        """
+        try:
+            dr.find_element(By.CSS_SELECTOR, 'button.buyNowButton--akeKg')
+            return True
+        except common.NoSuchElementException:
+            return False
+
+    @staticmethod
+    def _check_availability(card) -> bool:
+        """
+        Проверяет есть ли товар в наличии при поиске.
+        Вспомогательный метод для основного парсинга
+
+        :param card: HTML-разметка карты товара
+        :return: В наличии товар или нет
+        :rtype: bool
+        """
+        try:
+            card.find_element(By.CSS_SELECTOR, 'a.product-card__add-basket')
+            return True
+        except common.NoSuchElementException:
+            return False
+
+    @staticmethod
+    def search_by_query(query: str, answer_cnt: int = 20, price_limit: list[int] = None, delivery_limit: int = None) -> list[dict[str, str | bool | float]] | None:
+        """Поиск товаров на ВБ по запросу от пользователя
 
         :param query: То, что мы ищем на маркетплейсе
         :type query: str
-        :return: 20 самых дешевых товаров из найденных
-        :rtype: list[dict[str, str | bool | float]]
+        :param answer_cnt: Сколько товаров нужно вернуть(10 <= answer_cnt <= 30), defaults to 20
+        :type answer_cnt: int
+        :param price_limit: Диапозон цены, defaults to None
+        :type price_limit: list[int]
+        :param delivery_limit: Ограничение по сроку доставки, defaults to None
+        :type delivery_limit: int
+        :return: Самые дешевые товары из найденных
+        :rtype: list[dict[str, str | bool | float]] | None
         """
         driver: webdriver.Chrome = get_driver()
+        res_cnt: int = answer_cnt
         try:
             driver.get(WB_URL + query)
-            wait: WebDriverWait = WebDriverWait(driver, 15)
-            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'span.btn-icon__white')))
+            WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'span.btn-icon__white')))
             time.sleep(2)
+
             sort_btn = driver.find_element(By.CSS_SELECTOR, 'button.dropdown-filter__btn--sorter')
             actions: ActionChains = ActionChains(driver)
             actions.move_to_element(sort_btn).perform()
@@ -186,65 +265,142 @@ class WbParser:
                 EC.element_to_be_clickable((By.XPATH, "//span[text()='По возрастанию цены']"))
             )
             button.click()
+
+            if price_limit:
+                WbParser._open_filter_menu(driver)
+                WbParser._use_price_limit(driver, price_limit)
+                WbParser._apply_used_filters(driver)
             time.sleep(1)
-            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'article.product-card')))
-            result: list[dict[str, str | bool | float]] = []
-            cards = driver.find_elements(By.CSS_SELECTOR, 'article.product-card')[:20]
-            for card in cards:
-                try:
-                    name: str = card.find_element(By.CSS_SELECTOR, 'span.product-card__name').text
-                    price: float = price_in_float(card.find_element(By.CSS_SELECTOR, 'ins.price__lower-price').text)
-                    availability: bool = check_availability(card, 'wb')
-                    url_el = card.find_element(By.CSS_SELECTOR, 'a.product-card__link')
-                    url: str = url_el.get_attribute('href')
-                    article_number: str = card.get_attribute('data-nm-id')
-                    product: dict[str, str | bool | float] = {
-                        'name': name,
-                        'price': price,
-                        'availability': availability,
-                        'article_number': article_number,
-                        'url': url,
-                    }
-                    result.append(product)
-                except Exception as e:
-                    print(f"Ошибка при парсинге карточки: {e}")
-                    continue
-            return result
+
+            try:
+                WebDriverWait(driver, 1.5).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, 'b.not-found-result__title'))
+                )
+                return None
+
+            except common.TimeoutException:
+                WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'article.product-card')))
+                result: list[dict[str, str | bool | float]] = []
+                cards = driver.find_elements(By.CSS_SELECTOR, 'article.product-card')[:answer_cnt * 2]
+                for card in cards:
+                    if res_cnt == 0:
+                        break
+                    try:
+                        delivery_time: str = card.find_element(By.CSS_SELECTOR, 'span[data-helper="delivery-display"]').text
+                        if delivery_limit:
+                            if str_in_date(delivery_time) - datetime.date.today() > datetime.timedelta(days=delivery_limit):
+                                continue
+
+                        name: str = card.find_element(By.CSS_SELECTOR, 'span.product-card__name').text
+                        price: float = price_in_float(card.find_element(By.CSS_SELECTOR, 'ins.price__lower-price').text)
+                        availability: bool = WbParser._check_availability(card)
+                        url_el = card.find_element(By.CSS_SELECTOR, 'a.product-card__link')
+                        url: str = url_el.get_attribute('href')
+                        article_number: str = card.get_attribute('data-nm-id')
+                        product: dict[str, str | bool | float] = {
+                            'name': name,
+                            'price': price,
+                            'availability': availability,
+                            'article_number': article_number,
+                            'url': url,
+                            'delivery_time': delivery_time.strip().replace(',', ''),
+                        }
+                        result.append(product)
+                        res_cnt -= 1
+
+                    except Exception:
+                        continue
+
+                return result
+
+        except Exception:
+            return None
+
         finally:
             driver.quit()
 
     @staticmethod
-    def update_product_wb(url: str) -> dict[str, float | bool]:
-        """Обновление информации о товаре по url
+    def search_by_url(url: str) -> dict[str, str | bool | float]:
+        """
+        Поиск товара на ВБ по url
 
+        :param url: url товара, который ищем
+        :type url: str
+        :return: Информация о найденном товаре
+        :rtype: dict[str, str | bool | float]
+        """
+        ...
+
+    @staticmethod
+    def update_by_urls(urls: list[str]) -> list[dict[str, str | bool | float]] | None:
+        """
+        Обновляет сразу несколько товаров по их url
+
+        :param urls: Список с url обновляемых товаров
+        :type urls: list[str]
+        :return: Список с обновленной информацией о товарах
+        :rtype: list[dict[str, str | bool | float]] | None
+        """
+        try:
+            driver: webdriver.Chrome = get_driver()
+            updated_offers: list[dict[str, str | bool | float]] = []
+            for url in urls:
+                updated_offer = WbParser.update_by_url(driver, url)
+                if updated_offer:
+                    updated_offers.append(updated_offer)
+            return updated_offers
+
+        except Exception:
+            return None
+        finally:
+            driver.quit()
+
+    @staticmethod
+    def update_by_url(dr: webdriver.Chrome, url: str) -> dict[str, float | bool]:
+        """Обновление информации о товаре на ВБ по url
+
+        :param dr: Драйвер браузера
+        :type dr: webdriver.Chrome
         :param url: url обновляемого товара
         :type url: str
         :return: Обновленные цена и наличие товара
         :rtype: dict[str, float | bool]
         """
-        driver: webdriver.Chrome = get_driver()
         try:
-            driver.get(url)
-            wait: WebDriverWait = WebDriverWait(driver, 12)
-            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'span.sellerInfoNameDefaultText--qLwgq')))
-            availability: bool = update_availability(driver, 'wb')
-            if availability:
-                try:
-                    new_price: float | None = price_in_float(driver.find_element(By.CSS_SELECTOR, 'h2.mo-typography_color_danger').text)
-                except common.NoSuchElementException:
+            dr.get(url)
+            try:
+                WebDriverWait(dr, 7).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, 'h1.content404__title'))
+                )
+                return None
+            except common.TimeoutException:
+                WebDriverWait(dr, 12).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'span.sellerInfoNameDefaultText--qLwgq')))
+
+                availability: bool = WbParser._update_availability(dr)
+                if availability:
                     try:
-                        new_price = price_in_float(driver.find_element(By.CSS_SELECTOR, 'h2.mo-typography_color_accent').text)
+                        new_price: float | None = price_in_float(dr.find_element(By.CSS_SELECTOR, 'h2.mo-typography_color_danger').text)
                     except common.NoSuchElementException:
-                        new_price = price_in_float(driver.find_element(By.CSS_SELECTOR, 'ins.priceBlockFinalPrice--iToZR').text)
-            else:
-                new_price = None
-            result: dict[str, bool | float] = {
-                'new_price': new_price,
-                'availability': availability,
-            }
-            return result
-        finally:
-            driver.quit()
+                        try:
+                            new_price = price_in_float(dr.find_element(By.CSS_SELECTOR, 'h2.mo-typography_color_accent').text)
+                        except common.NoSuchElementException:
+                            new_price = price_in_float(dr.find_element(By.CSS_SELECTOR, 'ins.priceBlockFinalPrice--iToZR').text)
+
+                    new_delivery_time: str = dr.find_element(By.CSS_SELECTOR, 'div.deliveryTitleWrapper--WMRNu > span').text
+                    result: dict[str, bool | float] = {
+                        'new_price': new_price,
+                        'availability': availability,
+                        'new_delivery_time': new_delivery_time.strip().replace(',', ''),
+                    }
+                else:
+                    result = {
+                        'availability': availability,
+                    }
+
+                return result
+
+        except Exception:
+            return None
 
 
 class OzonParser:
@@ -252,18 +408,72 @@ class OzonParser:
     Парсер данных о товарах с Ozon
     """
     @staticmethod
-    def search_ozon(query: str) -> list[dict[str, str | bool | float]]:
-        """Поиск товаров на Озон
+    def use_price_limit(dr: webdriver.Chrome, limit: list[int]) -> None:
+        """
+        
 
-        :param query: То, что мы ищем на маркетплейсе
+        :param dr: _description_
+        :type dr: webdriver.Chrome
+        :param limit: _description_
+        :type limit: list[int]
+        """
+        ...
+
+    @staticmethod
+    def update_availability(dr: webdriver.Chrome) -> bool:
+        """
+        
+
+        :param dr: _description_
+        :type dr: webdriver.Chrome
+        :return: _description_
+        :rtype: bool
+        """
+
+    @staticmethod
+    def check_availability(card) -> bool:
+        """
+        
+
+        :param card: _description_
+        :type card: _type_
+        :return: _description_
+        :rtype: bool
+        """
+        ...
+
+    @staticmethod
+    def search_by_query(query: str, answer_cnt: int = 20, price_limit: list[int] = None, delivery_limit: str = None) -> list[dict[str, str | bool | float]]:
+        """
+        
+
+        :param query: _description_
         :type query: str
-        :return: 20 самых дешевых товаров из найденных
+        :param answer_cnt: _description_, defaults to 20
+        :type answer_cnt: int, optional
+        :param price_limit: _description_, defaults to None
+        :type price_limit: list[int], optional
+        :param delivery_limit: _description_, defaults to None
+        :type delivery_limit: str, optional
+        :return: _description_
         :rtype: list[dict[str, str | bool | float]]
         """
         ...
 
     @staticmethod
-    def update_product_ozon(url: str) -> dict[str, float | bool]:
+    def search_by_url(url: str) -> dict[str, str | bool | float]:
+        """
+        
+
+        :param url: _description_
+        :type url: str
+        :return: _description_
+        :rtype: dict[str, str | bool | float]
+        """
+        ...
+
+    @staticmethod
+    def update_by_url(url: str) -> dict[str, float | bool]:
         """Обновление информации о товаре по url
 
         :param url: url обновляемого товара
