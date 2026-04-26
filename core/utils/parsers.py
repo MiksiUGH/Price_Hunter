@@ -215,7 +215,7 @@ class WbParser:
         :rtype: bool
         """
         try:
-            dr.find_element(By.CSS_SELECTOR, 'button.buyNowButton--akeKg')
+            dr.find_element(By.XPATH, '//span[text()="Добавить в корзину"]')
             return True
         except common.NoSuchElementException:
             return False
@@ -237,7 +237,7 @@ class WbParser:
             return False
 
     @staticmethod
-    def search_by_query(query: str, answer_cnt: int = 20, price_limit: list[int] = None, delivery_limit: int = None) -> list[dict[str, str | bool | float]] | None:
+    def search_by_query(query: str, answer_cnt: int = 20, price_limit: list[int] = None, delivery_limit: int = None) -> list[dict[str, str | bool | float]]:
         """Поиск товаров на ВБ по запросу от пользователя
 
         :param query: То, что мы ищем на маркетплейсе
@@ -249,7 +249,7 @@ class WbParser:
         :param delivery_limit: Ограничение по сроку доставки, defaults to None
         :type delivery_limit: int
         :return: Самые дешевые товары из найденных
-        :rtype: list[dict[str, str | bool | float]] | None
+        :rtype: list[dict[str, str | bool | float]]
         """
         driver: webdriver.Chrome = get_driver()
         res_cnt: int = answer_cnt
@@ -276,7 +276,7 @@ class WbParser:
                 WebDriverWait(driver, 1.5).until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, 'b.not-found-result__title'))
                 )
-                return None
+                return {'error': 'ResNotFound'}
 
             except common.TimeoutException:
                 WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'article.product-card')))
@@ -313,8 +313,8 @@ class WbParser:
 
                 return result
 
-        except Exception:
-            return None
+        except Exception as e:
+            return {'error': e}
 
         finally:
             driver.quit()
@@ -329,7 +329,45 @@ class WbParser:
         :return: Информация о найденном товаре
         :rtype: dict[str, str | bool | float]
         """
-        ...
+        try:
+            driver: webdriver.Chrome = get_driver()
+            driver.get(url)
+            try:
+                WebDriverWait(driver, 7).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, 'h1.content404__title'))
+                )
+                return {'error': 'Content404'}
+
+            except common.TimeoutException:
+                WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'span.sellerInfoNameDefaultText--qLwgq')))
+                name: str = driver.find_element(By.CSS_SELECTOR, 'h2.productTitle--lfc4o').text
+                try:
+                    price: float | None = price_in_float(driver.find_element(By.CSS_SELECTOR, 'h2.mo-typography_color_danger').text)
+                except common.NoSuchElementException:
+                    try:
+                        price = price_in_float(driver.find_element(By.CSS_SELECTOR, 'h2.mo-typography_color_accent').text)
+                    except common.NoSuchElementException:
+                        price = price_in_float(driver.find_element(By.CSS_SELECTOR, 'ins.priceBlockFinalPrice--iToZR').text)
+                availability: bool = WbParser._update_availability(driver)
+                article_number: str = driver.find_element(By.CSS_SELECTOR, 'button.cellCopy--sPwsd > span').text
+                print(article_number)
+                delivery_time: str = driver.find_element(By.CSS_SELECTOR, 'div.deliveryTitleWrapper--WMRNu > span').text
+                print(delivery_time)
+                product: dict[str, str | bool | float] = {
+                    'name': name,
+                    'price': price,
+                    'availability': availability,
+                    'article_number': article_number,
+                    'url': url,
+                    'delivery_time': delivery_time.strip().replace(',', ''),
+                }
+                return product
+
+        except Exception as e:
+            return {'error': e}
+
+        finally:
+            driver.quit()
 
     @staticmethod
     def update_by_urls(urls: list[str]) -> list[dict[str, str | bool | float]] | None:
@@ -350,8 +388,9 @@ class WbParser:
                     updated_offers.append(updated_offer)
             return updated_offers
 
-        except Exception:
-            return None
+        except Exception as e:
+            return {'error': e}
+
         finally:
             driver.quit()
 
@@ -372,7 +411,7 @@ class WbParser:
                 WebDriverWait(dr, 7).until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, 'h1.content404__title'))
                 )
-                return None
+                return {'error': 'Content404'}
             except common.TimeoutException:
                 WebDriverWait(dr, 12).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'span.sellerInfoNameDefaultText--qLwgq')))
 
@@ -399,8 +438,8 @@ class WbParser:
 
                 return result
 
-        except Exception:
-            return None
+        except Exception as e:
+            return {'error': e}
 
 
 class OzonParser:
@@ -482,3 +521,13 @@ class OzonParser:
         :rtype: dict[str, float | bool]
         """
         ...
+
+
+if __name__ == '__main__':
+    res = WbParser.search_by_query('bbno$', price_limit=[3000, 4000], delivery_limit=5)
+    for r in res:
+        print(r)
+        print('=' * 60)
+    print(WbParser.search_by_url('https://www.wildberries.ru/catalog/57503465/detail.aspx?targetUrl=MI'))
+    print(WbParser.search_by_url('https://www.wildberries.ru/catalog/572503465/detail.aspx?targetUrl=MI'))
+    print(WbParser.update_by_urls([x['url'] for x in res]))
