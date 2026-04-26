@@ -1,0 +1,82 @@
+.edit-container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+.edit-card {
+    background: rgba(18, 25, 40, 0.85);
+    backdrop-filter: blur(12px);
+    border-radius: 32px;
+    padding: 2rem;
+    border: 1px solid rgba(0, 230, 118, 0.2);
+}
+.edit-title {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: var(--primary-green);
+    border-left: 3px solid var(--primary-green);
+    padding-left: 1rem;
+}
+.form-group {
+    margin-bottom: 1.5rem;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--primary-green);
+}
+.form-group input {
+    width: 100%;
+    padding: 0.9rem 1.2rem;
+    background: #0c121c;
+    border: 1px solid #2a3a4a;
+    border-radius: 60px;
+    color: white;
+    font-size: 1rem;
+}
+.form-group input:focus {
+    border-color: var(--primary-green);
+    outline: none;
+}
+.avatar-preview {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+.avatar-circle {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--primary-green), var(--primary-blue));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: #000;
+}
+.btn-group {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}
+.save-btn, .cancel-btn {
+    background: linear-gradient(95deg, var(--primary-green), var(--primary-blue));
+    border: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #000;
+}
+.cancel-btn {
+    background: rgba(255,94,126,0.2);
+    border: 1px solid #ff5e7e;
+    color: #ff9eae;
+}
+@media (max-width: 767px) {
+    .edit-container { padding: 1rem; }
+    .edit-card { padding: 1.2rem; }
+}
