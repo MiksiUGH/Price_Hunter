@@ -1,6 +1,4 @@
-// main.js – логика главной страницы:
-// - отправка поискового запроса + первых 4 фильтров на сервер
-// - полученные карточки сохраняются и сортируются клиентскими фильтрами (цена, маркетплейс)
+// main.js – логика главной страницы
 
 document.addEventListener('DOMContentLoaded', () => {
     // DOM-элементы
@@ -19,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlResultArea = document.getElementById('urlResultArea');
     const productsContainer = document.getElementById('productsContainer');
 
-    // Элементы фильтров (первые 4 блока)
+    // Фильтры
     const marketContainer = document.getElementById('marketMultiSelect');
     const marketTrigger = marketContainer?.querySelector('.multi-select-trigger');
     const marketCheckboxes = marketContainer?.querySelectorAll('.multi-dropdown input[type="checkbox"]') || [];
@@ -27,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const deliveryRadios = document.querySelectorAll('input[name="deliveryRadio"]');
     const deliverySelectedSpan = document.getElementById('deliverySelectedLabel');
 
-    // ========== Инициализация дропдаунов ==========
+    // Инициализация дропдаунов
     function setupDropdown(container, trigger) {
         if (!container || !trigger) return;
         trigger.addEventListener('click', (e) => {
@@ -44,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupDropdown(marketContainer, marketTrigger);
     setupDropdown(document.getElementById('deliverySelect'), document.querySelector('.delivery-trigger'));
 
-    // Обработчик "Все" для маркетплейсов
+    // Обработка "Все" для маркетплейсов
     if (allCheck) {
         allCheck.addEventListener('change', () => {
             const isAll = allCheck.checked;
@@ -67,15 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
     deliveryRadios.forEach(r => r.addEventListener('change', updateDeliveryLabel));
     updateDeliveryLabel();
 
-    // ========== Переменные для хранения текущих товаров и сортировки ==========
-    let currentProductsHtml = '';       // HTML карточек, полученных от сервера
-    let currentProductsData = [];       // массив объектов товаров (если сервер отдаёт JSON, иначе парсим HTML)
-    // Если сервер возвращает готовый HTML, для сортировки нужно извлечь данные (цена, маркетплейс)
-    // Ниже предполагаем, что сервер возвращает HTML карточек, и для сортировки мы будем переставлять блоки.
-    // Альтернатива: сервер возвращает JSON, тогда сохраняем массив и рендерим сами.
-    // Для простоты оставим работу с HTML: при сортировке будем извлекать блоки и переставлять.
-
-    // Функция перестановки карточек в соответствии с выбранной сортировкой
+    // Клиентская сортировка
     function sortExistingCards() {
         if (!productsContainer) return;
         const cards = Array.from(productsContainer.querySelectorAll('.product-card'));
@@ -83,19 +73,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const priceSort = sortPrice?.value || 'none';
         const marketFilter = sortMarket?.value || 'any';
 
-        // Сначала фильтруем по маркетплейсу (если выбран конкретный)
-        let filteredCards = cards;
-        if (marketFilter !== 'any') {
-            filteredCards = cards.filter(card => {
-                const marketplaceElem = card.querySelector('.card-meta:last-child span:last-child');
-                const marketplace = marketplaceElem?.innerText.trim() || '';
-                return marketplace === marketFilter;
-            });
-        } else {
-            filteredCards = [...cards];
-        }
+        let filteredCards = marketFilter !== 'any' ? cards.filter(card => {
+            const marketplaceElem = card.querySelector('.card-meta:last-child span:last-child');
+            return marketplaceElem?.innerText.trim() === marketFilter;
+        }) : [...cards];
 
-        // Сортируем по цене
         if (priceSort !== 'none') {
             filteredCards.sort((a, b) => {
                 const priceA = parseInt(a.querySelector('.card-price')?.innerText.replace(/[^\d]/g, '') || 0);
@@ -103,17 +85,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 return priceSort === 'asc' ? priceA - priceB : priceB - priceA;
             });
         }
-
-        // Переставляем элементы в контейнере
         productsContainer.innerHTML = '';
         filteredCards.forEach(card => productsContainer.appendChild(card));
     }
 
-    // Навешиваем обработчики на сортировку
     if (sortPrice) sortPrice.addEventListener('change', sortExistingCards);
     if (sortMarket) sortMarket.addEventListener('change', sortExistingCards);
 
-    // ========== Функция отправки поискового запроса (первые 4 фильтра + поиск) ==========
+    // Привязка кнопок "В избранное"
+    function bindFavoriteButtons() {
+        document.querySelectorAll('.fav-btn:not(.bound)').forEach(btn => {
+            btn.classList.add('bound');
+            btn.onclick = async (e) => {
+                e.preventDefault();
+                const productId = btn.dataset.id || btn.closest('.product-card')?.dataset.id;
+                if (!productId) return;
+                // TODO: заменить эндпоинт на реальный
+                try {
+                    await fetch('/api/favorites/add/', {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: productId })
+                    });
+                } catch (err) { console.error(err); }
+            };
+        });
+    }
+
+    // Поиск товаров
     async function performSearch() {
         if (!productsContainer) return;
         productsContainer.innerHTML = '<div style="text-align:center; padding:2rem;"><i class="fas fa-spinner fa-spin"></i> Загрузка...</div>';
@@ -143,20 +142,19 @@ document.addEventListener('DOMContentLoaded', () => {
         params.append('delivery_days', deliveryDays);
 
         try {
-            // Замените URL на реальный эндпоинт Django
+            // TODO: заменить эндпоинт на реальный /api/search/
             const response = await fetch(`/api/search/?${params.toString()}`);
             if (!response.ok) throw new Error();
             const html = await response.text();
             productsContainer.innerHTML = html;
-            // После загрузки новых карточек применяем текущую сортировку (если она активна)
             sortExistingCards();
+            bindFavoriteButtons();
         } catch (error) {
             productsContainer.innerHTML = '<div style="text-align:center; padding:2rem; color:#ffaa66;">⚠️ Ошибка при загрузке товаров. Попробуйте позже.</div>';
             console.error(error);
         }
     }
 
-    // Кнопка "Искать"
     if (searchBtn) {
         searchBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -164,19 +162,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Переключение между режимами "По названию" и "По URL"
+    // Переключение режимов
     modeBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const mode = btn.getAttribute('data-mode');
             modeBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             if (mode === 'name') {
-                if (nameSection) nameSection.classList.add('active-section');
-                if (urlSection) urlSection.classList.remove('active-section');
-                // Если нужно загрузить товары при переключении – можно вызвать performSearch()
+                nameSection?.classList.add('active-section');
+                urlSection?.classList.remove('active-section');
             } else {
-                if (nameSection) nameSection.classList.remove('active-section');
-                if (urlSection) urlSection.classList.add('active-section');
+                nameSection?.classList.remove('active-section');
+                urlSection?.classList.add('active-section');
             }
         });
     });
@@ -191,15 +188,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             urlResultArea.innerHTML = '<div style="text-align:center;"><i class="fas fa-spinner fa-spin"></i> Загрузка...</div>';
             try {
-                // Замените на реальный эндпоинт
+                // TODO: заменить эндпоинт на реальный /api/parse-url/
                 const response = await fetch('/api/parse-url/', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ url: urlValue })
                 });
                 if (!response.ok) throw new Error();
                 const html = await response.text();
                 urlResultArea.innerHTML = html;
+                bindFavoriteButtons(); // если в большой карточке есть кнопка "В избранное"
             } catch (error) {
                 urlResultArea.innerHTML = '<div style="color:#ffaa66;">⚠️ Не удалось загрузить товар. Проверьте URL.</div>';
                 console.error(error);
@@ -207,7 +205,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // При загрузке страницы можно выполнить поиск с параметрами по умолчанию
-    // (если нужно показать какие-то товары сразу)
-    // performSearch(); – раскомментируйте при необходимости
+    bindFavoriteButtons();
 });

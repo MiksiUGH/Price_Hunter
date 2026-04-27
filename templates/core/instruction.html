@@ -1,9 +1,86 @@
-{% extends "includes/base.html" %}
+{% extends "includes/core/base.html" %}
+
+{% block title %}{{ block.super }}{% endblock title %}
 
 {% block styles %}<link href="{% static 'core/css/instruction.css' %}"></link>{% endblock styles %}
 
 {% block main %}
+<main class="instruction-container">
+    <div class="hero-instruction">
+        <h1>📘 Как пользоваться PriceHunter</h1>
+        <p>Интеллектуальный поиск лучших цен на маркетплейсах</p>
+    </div>
 
+    <div class="step-card">
+        <div class="step-header">
+            <div class="step-number">1</div>
+            <div class="step-title">Поиск товаров по названию или URL</div>
+        </div>
+        <div class="step-content">
+            На главной странице выберите режим поиска:
+            <ul>
+                <li><strong>🔍 Поиск по названию</strong> – введите название товара, настройте фильтры (количество, маркетплейсы, цену, срок доставки) и нажмите «Искать».</li>
+                <li><strong>🌐 Поиск по URL</strong> – вставьте прямую ссылку на товар с Ozon, Wildberries или Яндекс.Маркета, и система покажет карточку с актуальной ценой и наличием.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="step-card">
+        <div class="step-header">
+            <div class="step-number">2</div>
+            <div class="step-title">Фильтры и сортировка</div>
+        </div>
+        <div class="step-content">
+            После поиска вы можете уточнить результаты:
+            <ul>
+                <li><strong>Фильтры</strong> – ограничьте количество товаров, выберите конкретные маркетплейсы (можно несколько), задайте диапазон цен и максимальный срок доставки.</li>
+                <li><strong>Сортировка</strong> – упорядочивайте карточки по цене (возрастание/убывание) или по маркетплейсу.</li>
+            </ul>
+            Все изменения применяются мгновенно без перезагрузки страницы.
+        </div>
+    </div>
+
+    <div class="step-card">
+        <div class="step-header">
+            <div class="step-number">3</div>
+            <div class="step-title">Избранное и отслеживание цен</div>
+        </div>
+        <div class="step-content">
+            На каждой карточке товара есть кнопка <i class="far fa-heart"></i> <strong>«Изб.»</strong>. Нажав на неё, вы добавите товар в избранное. Система будет автоматически проверять цены на эти товары с выбранной вами периодичностью (в настройках) и присылать уведомления об изменениях.
+        </div>
+    </div>
+
+    <div class="step-card">
+        <div class="step-header">
+            <div class="step-number">4</div>
+            <div class="step-title">Профиль и настройки</div>
+        </div>
+        <div class="step-content">
+            В правом меню (бургер) вы можете перейти в <strong>«Мой профиль»</strong>, где указана информация о вас, статистика и кнопка для редактирования профиля.  
+            В разделе <strong>«Настройки»</strong> можно изменить тему, язык, валюту и периодичность проверки товаров из избранного.
+        </div>
+    </div>
+
+    <div class="step-card">
+        <div class="step-header">
+            <div class="step-number">5</div>
+            <div class="step-title">Сообщить об ошибке или предложить сотрудничество</div>
+        </div>
+        <div class="step-content">
+            В нижней части любой страницы есть кнопки «Для сотрудничества» и «Сообщить об ошибке». Нажмите на них, чтобы связаться с нами – мы всегда рады обратной связи!
+        </div>
+    </div>
+
+    <div class="faq-section">
+        <h3 style="color: var(--primary-green); margin-bottom: 1rem;"><i class="fas fa-question-circle"></i> Часто задаваемые вопросы</h3>
+        <div class="faq-question">❓ Сколько товаров можно добавить в избранное?</div>
+        <div>Неограниченно. Все ваши избранные товары хранятся в личном кабинете.</div>
+        <div class="faq-question">❓ Почему иногда не находится товар по URL?</div>
+        <div>Убедитесь, что ссылка ведёт на страницу товара одного из поддерживаемых маркетплейсов (Ozon, Wildberries, Яндекс.Маркет). Возможно, товар снят с продажи.</div>
+        <div class="faq-question">❓ Как изменить пароль?</div>
+        <div>Перейдите в раздел редактирования профиля, там есть ссылка на отдельную страницу смены пароля.</div>
+    </div>
+</main>
 {% endblock main %}
 
 {% block scripts %}<script src="{% static 'core/js/instruction.js' %}"></script>{% endblock scripts %}

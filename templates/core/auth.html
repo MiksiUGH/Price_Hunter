@@ -1,9 +1,64 @@
-{% extends "includes/base.html" %}
+{% extends "includes/core/base.html" %}
+
+{% block title %}{{ block.super }}{% endblock title %}
 
 {% block styles %}<link href="{% static 'core/css/auth.css' %}"></link>{% endblock styles %}
 
 {% block main %}
+<main class="main-container">
+    <div class="form-card">
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="login">Вход</button>
+            <button class="tab-btn" data-tab="register">Регистрация</button>
+        </div>
 
+        <!-- Форма входа -->
+        <div id="loginPane" class="form-pane active-pane">
+            <form method="post" action="{% url 'login' %}">
+                {% csrf_token %}
+                <div class="input-group">
+                    <label for="InputEmail"><i class="fas fa-envelope"></i> Email</label>
+                    <input type="text" name="useremail" placeholder="example@mail.ru" id="InputEmail" required>
+                </div>
+                <div class="input-group">
+                    <label for="InputPassword"><i class="fas fa-lock"></i> Пароль</label>
+                    <input type="password" name="password" placeholder="••••••••" id="InputPassword" required>
+                </div>
+                <button type="submit" class="submit-btn">Войти</button>
+                <div class="auth-footer">
+                    <a href="#">Забыли пароль?</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Форма регистрации -->
+        <div id="registerPane" class="form-pane">
+            <form method="post" action="{% url 'register' %}">
+                {% csrf_token %}
+                <div class="input-group">
+                    <label for="InputName"><i class="fas fa-user"></i> Имя пользователя</label>
+                    <input type="text" name="username" placeholder="Nickname" id="InputName" required>
+                </div>
+                <div class="input-group">
+                    <label for="InputEmail_"><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" name="email" placeholder="your@email.com" id="InputEmail_" required>
+                </div>
+                <div class="input-group">
+                    <label for="InputPassword1"><i class="fas fa-lock"></i> Пароль</label>
+                    <input type="password" name="password1" placeholder="Минимум 8 символов" id="InputPassword1" required>
+                </div>
+                <div class="input-group">
+                    <label for="InputPassword2"><i class="fas fa-lock"></i> Подтверждение пароля</label>
+                    <input type="password" name="password2" placeholder="Повторите пароль" id="InputPassword2" required>
+                </div>
+                <button type="submit" class="submit-btn">Зарегистрироваться</button>
+                <div class="auth-footer">
+                    Уже есть аккаунт? <a href="#" id="switchToLogin">Войдите</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
 {% endblock main %}
 
 {% block scripts %}<script src="{% static 'core/js/auth.js' %}"></script>{% endblock scripts %}

@@ -1,9 +1,48 @@
-{% extends "includes/base.html" %}
+{% extends "includes/core/base.html" %}
+
+{% block title %}{{ block.super }}{% endblock title %}
 
 {% block styles %}<link href="{% static 'core/css/edit_profile.css' %}"></link>{% endblock styles %}
 
 {% block main %}
+<main class="edit-container">
+    <div class="edit-card">
+        <div class="edit-title"><i class="fas fa-user-edit"></i> Редактирование профиля</div>
 
+        <div class="avatar-preview">
+            <div class="avatar-circle">
+                <i class="fas fa-user-astronaut"></i>
+            </div>
+        </div>
+
+        <form method="post" action="{% url 'edit_profile' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label><i class="fas fa-user"></i> Имя пользователя (логин)</label>
+                <input type="text" name="username" value="{{ user.username }}" required>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-user-circle"></i> Имя</label>
+                <input type="text" name="first_name" value="{{ user.first_name }}">
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-user-circle"></i> Фамилия</label>
+                <input type="text" name="last_name" value="{{ user.last_name }}">
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-envelope"></i> Email</label>
+                <input type="email" name="email" value="{{ user.email }}" required>
+            </div>
+            <div class="btn-group">
+                <button type="submit" class="save-btn"><i class="fas fa-save"></i> Сохранить изменения</button>
+                <a href="profile.html" class="cancel-btn" style="text-decoration: none; display: inline-block; text-align: center; line-height: normal;"><i class="fas fa-times"></i> Отмена</a>
+            </div>
+        </form>
+        <div class="note" style="margin-top: 1rem;">
+            <i class="fas fa-lock"></i> Пароль можно изменить на <a href="/change-password/" style="color: var(--primary-green);">отдельной странице</a>.
+        </div>
+    </div>
+</main>
 {% endblock main %}
 
 {% block scripts %}<script src="{% static 'core/js/edit_profile.js' %}"></script>{% endblock scripts %}
