@@ -11,13 +11,13 @@
     <title>PriceHunter — {% block title %}{{ title }}{% endblock %}</title>
 </head>
 <body>
-{% include "includes/header.html" %}
+{% include "includes/core/header.html" %}
 
 <main>
     {% block main %}{% endblock %}
 </main>
 
-{% include "includes/footer.html" %}
+{% include "includes/core/footer.html" %}
 
 <script src="{% static 'core/js/common.js' %}"></script>
 {% block scripts %}{% endblock %}
