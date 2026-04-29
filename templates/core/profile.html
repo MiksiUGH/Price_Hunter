@@ -38,7 +38,7 @@
             <div class="favorites-title"><i class="fas fa-heart"></i> Избранные товары</div>
             <div id="favoritesContainer" class="products-grid">
                 {% for item in favorite_items %}
-                    {% include "includes/core/product_card.html" with product=item is_favorite=True %}
+                    {% include "includes/core/product_card.html" with offer=item is_favorite=True %}
                 {% empty %}
                     <div style="grid-column:1/-1; text-align:center; padding:2rem;">⭐ Нет избранных товаров. Добавьте их на главной странице.</div>
                 {% endfor %}

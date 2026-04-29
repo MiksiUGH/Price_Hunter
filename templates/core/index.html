@@ -79,8 +79,8 @@
         </div>
 
         <div id="productsContainer" class="products-grid">
-            {% for product in products %}
-                {% include "includes/core/product_card.html" with product=product %}
+            {% for offer in offers %}
+                {% include "includes/core/product_card.html" with offer=offer %}
             {% empty %}
                 <div style="grid-column:1/-1; text-align:center; padding:3rem;">😞 Товары не найдены.</div>
             {% endfor %}
@@ -100,8 +100,8 @@
             <div class="url-right" id="urlResultArea">
                 <div style="text-align: center; color: #6c8dae;">
                     <div class="url-right" id="urlResultArea">
-                        {% if product %}
-                            {% include "includes/core/product_big_card.html" with product=product %}
+                        {% if offer %}
+                            {% include "includes/core/product_big_card.html" with offer=offer %}
                         {% else %}
                             <div style="text-align: center; color: #6c8dae;">
                                 ✨ Здесь появится карточка товара

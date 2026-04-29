@@ -20,8 +20,12 @@ function initBurgerMenu() {
 function initFooterButtons() {
     const coopBtn = document.getElementById('coopBtn');
     const reportBtn = document.getElementById('reportBugBtn');
-    if (coopBtn) coopBtn.addEventListener('click', () => alert('Сотрудничество: partnership@pricehunter.ru'));
-    if (reportBtn) reportBtn.addEventListener('click', () => alert('Сообщить об ошибке: bugs@pricehunter.ru'));
+    if (coopBtn) coopBtn.addEventListener('click', () => {
+        window.location.href = 'mailto:supporthunter67@gmail.com?subject=Сотрудничество';
+    });
+    if (reportBtn) reportBtn.addEventListener('click', () => {
+        window.location.href = 'mailto:supporthunter67@gmail.com?subject=Сообщение об ошибке';
+    });
 }
 
 // Запуск при загрузке DOM

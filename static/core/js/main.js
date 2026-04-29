@@ -100,13 +100,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 const productId = btn.dataset.id || btn.closest('.product-card')?.dataset.id;
                 if (!productId) return;
-                // TODO: заменить эндпоинт на реальный
                 try {
-                    await fetch('/api/favorites/add/', {
-                        method: 'POST',
-                        headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id: productId })
-                    });
+                    await fetch(`/hunter/favorites/${productId}/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrftoken }
+                });
                 } catch (err) { console.error(err); }
             };
         });
@@ -142,8 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
         params.append('delivery_days', deliveryDays);
 
         try {
-            // TODO: заменить эндпоинт на реальный /api/search/
-            const response = await fetch(`/api/search/?${params.toString()}`);
+            const response = await fetch(`/hunter/query_search/?${params.toString()}`);
             if (!response.ok) throw new Error();
             const html = await response.text();
             productsContainer.innerHTML = html;
@@ -188,12 +185,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             urlResultArea.innerHTML = '<div style="text-align:center;"><i class="fas fa-spinner fa-spin"></i> Загрузка...</div>';
             try {
-                // TODO: заменить эндпоинт на реальный /api/parse-url/
-                const response = await fetch('/api/parse-url/', {
-                    method: 'POST',
-                    headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: urlValue })
-                });
+                const param = new URLSearchParams()
+                param.append('url', urlValue)
+                const response = await fetch(`/hunter/url_search/?${param.toString()}`);
                 if (!response.ok) throw new Error();
                 const html = await response.text();
                 urlResultArea.innerHTML = html;

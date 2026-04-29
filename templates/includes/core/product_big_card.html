@@ -1,33 +1,33 @@
 {% if product %}
-    <div class="big-card" data-id="{{ product.id }}" style="background:#0f1825; border-radius:32px; padding:1.5rem;">
+    <div class="big-card" data-id="{{ offer.id }}" style="background:#0f1825; border-radius:32px; padding:1.5rem;">
         <h3 style="color:var(--primary-green);"><i class="fas fa-tag"></i> Найден товар</h3>
-        <div class="card-title" style="font-size:1.4rem;">{{ product.name }}</div>
-        <div class="card-price" style="font-size:2rem;">{{ product.price|floatformat:0 }} ₽</div>
+        <div class="card-title" style="font-size:1.4rem;">{{ offer.name }}</div>
+        <div class="card-price" style="font-size:2rem;">{{ offer.price|floatformat:0 }} ₽</div>
         <div class="card-meta">
-            <span>✅ {{ product.availability|yesno:"В наличии,Нет в наличии" }}</span>
+            <span>✅ {{ offer.availability|yesno:"В наличии,Нет в наличии" }}</span>
             <span>⏱️ доставка: 
-                {% if product.delivery_time == 1 %}
+                {% if offer.delivery_time == 1 %}
                     Завтра
-                {% elif product.delivery_time == 2 %}
+                {% elif offer.delivery_time == 2 %}
                     Послезавтра
                 {% else %}
-                    {{ product.delivery_time }} дн.
+                    {{ offer.delivery_time }} дн.
                 {% endif %}
             </span>
         </div>
         <div class="card-meta">
-            <span>🏪 {{ product.marketplace }}</span>
+            <span>🏪 {{ offer.marketplace }}</span>
         </div>
         <div class="card-actions" style="margin-top:20px;">
-            <button class="fav-btn" data-id="{{ product.id }}">
+            <button class="fav-btn" data-id="{{ offer.id }}">
                 <i class="far fa-heart"></i> В избранное
             </button>
-            <button class="view-btn" data-url="{{ product.url }}">
+            <button class="view-btn" data-url="{{ offer.url }}">
                 Перейти на маркетплейс
             </button>
         </div>
         <p style="margin-top:12px; font-size:0.75rem;">
-            🔗 URL: {{ product.url }}
+            🔗 URL: {{ offer.url }}
         </p>
     </div>
 {% else %}

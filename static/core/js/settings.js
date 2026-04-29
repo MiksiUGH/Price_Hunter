@@ -10,8 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadSettings() {
         try {
-            // TODO: заменить эндпоинт на реальный /api/settings/
-            const response = await fetch('/api/settings/');
+            const response = await fetch('/hunter/settings/');
             if (!response.ok) throw new Error();
             const settings = await response.json();
             if (themeSelect) themeSelect.value = settings.theme || 'dark';
@@ -38,9 +37,8 @@ document.addEventListener('DOMContentLoaded', () => {
             email_notifications: activateEmail?.value === 'true'
         };
         try {
-            // TODO: заменить эндпоинт на реальный /api/settings/
-            const response = await fetch('/api/settings/', {
-                method: 'POST',
+            const response = await fetch('/hunter/settings/', {
+                method: 'PUT',
                 headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
