@@ -1,6 +1,6 @@
 """Файл с настройками администраторской панели"""
 from django.contrib import admin
-from core.models import Shop, Product, Offer, PriceHistory, Subscription
+from core.models import Shop, Product, Offer, PriceHistory, Subscription, UserSetting
 
 
 class ShopAdmin(admin.ModelAdmin):
@@ -42,8 +42,14 @@ class SubscriptionAdmin(admin.ModelAdmin):
     raw_id_fields = ['user', 'offer']
 
 
+class UserSettingAdmin(admin.ModelAdmin):
+    """Настройка отображения пользовательских настроек в админке"""
+    list_display = ['user', 'language', 'currency', 'check_interval', 'email_notifications']
+
+
 admin.site.register(Shop, ShopAdmin)
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Offer, OfferAdmin)
 admin.site.register(PriceHistory, PriceHistoryAdmin)
 admin.site.register(Subscription, SubscriptionAdmin)
+admin.site.register(UserSetting, UserSettingAdmin)

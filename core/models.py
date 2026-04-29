@@ -1,6 +1,8 @@
 """Файл со всеми моделями БД"""
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 class Shop(models.Model):
@@ -124,3 +126,52 @@ class Subscription(models.Model):
 
     class Meta:
         unique_together = (('user', 'offer'),)
+
+
+class UserSetting(models.Model):
+    """Модель настроек для пользователя"""
+    theme = models.CharField(
+        max_length=10,
+        choices=[('dark','Тёмная'),('light','Светлая')],
+        default='dark'
+    )
+    language = models.CharField(
+        max_length=2,
+        choices=[('ru','Русский'),('en','English')],
+        default='ru'
+    )
+    currency = models.CharField(
+        max_length=3,
+        choices=[('RUB','Рубль'),('USD','Доллар'),('EUR','Евро')],
+        default='RUB'
+    )
+    check_interval = models.PositiveSmallIntegerField(
+        default=24,
+        help_text='Частота проверки (часы)'
+    )
+    email_notifications = models.BooleanField(default=False)
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='settings'
+    )
+
+    def __str__(self):
+        return f'Настройки {self.user.username}'
+
+
+@receiver(post_save, sender=User)
+def create_user_settings(sender, instance, created, **kwargs):
+    """
+    Сигнал для создания настроек пользователя
+
+    :param sender: От какой модели сигналы мы обрабатываем
+    :type sender: object
+    :param instance: Сам созданный объект модели, передающей сигналы
+    :type instance: User
+    :param created: Был ли создан объект, модель которого передает сигналы
+    :type created: bool
+    """
+    if created:
+        UserSetting.objects.create(user=instance)
