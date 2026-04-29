@@ -1,0 +1,72 @@
+{% extends "includes/core/base.html" %}
+
+{% block title %}{{ block.super }}{% endblock title %}
+
+{% block styles %}<link href="{% static 'core/css/settings.css' %}"></link>{% endblock styles %}
+
+{% block main %}
+<main class="settings-container">
+    <div class="settings-card">
+        <div class="settings-title"><i class="fas fa-cog"></i> Настройки</div>
+
+        <div class="setting-row">
+            <div class="setting-label"><i class="fas fa-palette"></i> Тема оформления</div>
+            <div class="setting-control">
+                <select id="themeSelect">
+                    <option value="dark" selected>Тёмная (по умолчанию)</option>
+                    <option value="light">Светлая</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="setting-row">
+            <div class="setting-label"><i class="fas fa-language"></i> Язык интерфейса</div>
+            <div class="setting-control">
+                <select id="languageSelect">
+                    <option value="ru">Русский</option>
+                    <option value="en">English</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="setting-row">
+            <div class="setting-label"><i class="fas fa-money-bill-wave"></i> Валюта</div>
+            <div class="setting-control">
+                <select id="currencySelect">
+                    <option value="RUB">Рубль (₽)</option>
+                    <option value="USD">Доллар ($)</option>
+                    <option value="EUR">Евро (€)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="setting-row">
+            <div class="setting-label"><i class="fas fa-clock"></i> Проверять избранное</div>
+            <div class="setting-control">
+                <select id="checkInterval">
+                    <option value="1">раз в 1 день</option>
+                    <option value="2">раз в 2 дня</option>
+                    <option value="3">раз в 3 дня</option>
+                    <option value="4">раз в 4 дня</option>
+                </select>
+                <div class="note">Система будет присылать уведомления об изменении цен, появлении и отсутствиии товара и т.п.
+                </div>
+            </div>
+        </div>
+
+        <div class="setting-row">
+            <div class="setting-label"><i class="fas fa-bell"></i> Рассылка о изменении товаров в избранном</div>
+            <div class="setting-control">
+                <select id="activateEmail">
+                    <option value="true">Включена</option>
+                    <option value="false" selected>Выключена</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="save-btn" id="saveSettingsBtn"><i class="fas fa-save"></i> Сохранить настройки</button>
+    </div>
+</main>
+{% endblock main %}
+
+{% block scripts %}<script src="{% static 'core/js/settings.js' %}"></script>{% endblock scripts %}

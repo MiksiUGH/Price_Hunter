@@ -1,0 +1,177 @@
+/* ============================================
+   AUTH.CSS – страница входа и регистрации
+   ============================================ */
+
+.main-container {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+.form-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border-radius: 40px;
+    padding: 2rem;
+    border: 1px solid rgba(0, 230, 118, 0.3);
+    box-shadow: 0 20px 35px rgba(0,0,0,0.3);
+}
+
+.tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid rgba(45,122,255,0.3);
+    padding-bottom: 0.5rem;
+}
+.tab-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.4rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    transition: 0.2s;
+}
+.tab-btn.active {
+    color: var(--primary-green);
+    border-bottom: 2px solid var(--primary-green);
+}
+.form-pane {
+    display: none;
+    animation: fade 0.2s ease;
+}
+.form-pane.active-pane {
+    display: block;
+}
+@keyframes fade {
+    from { opacity: 0; transform: translateY(8px);}
+    to { opacity: 1; transform: translateY(0);}
+}
+
+.input-group {
+    margin-bottom: 1.5rem;
+}
+.input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--primary-green);
+}
+.input-group input {
+    width: 100%;
+    padding: 0.9rem 1.2rem;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 60px;
+    color: white;
+    font-size: 1rem;
+    outline: none;
+    transition: 0.2s;
+}
+.input-group input:focus {
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 2px rgba(0,230,118,0.2);
+}
+.submit-btn {
+    width: 100%;
+    background: linear-gradient(95deg, var(--primary-green), var(--primary-blue));
+    border: none;
+    padding: 0.9rem;
+    border-radius: 60px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #000;
+    cursor: pointer;
+    transition: 0.2s;
+    margin-top: 0.5rem;
+}
+.submit-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 12px rgba(0,230,118,0.4);
+}
+.auth-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+.auth-footer a {
+    color: var(--primary-green);
+    text-decoration: none;
+}
+
+/* Адаптивность для формы */
+@media (max-width: 767px) {
+    .main-container { padding: 1rem; }
+    .form-card { padding: 1.5rem; }
+    .tab-btn { font-size: 1.2rem; }
+}
+@media (max-width: 575px) {
+    .form-card { padding: 1.2rem; }
+    .input-group input { padding: 0.7rem 1rem; }
+    .submit-btn { padding: 0.7rem; }
+}
+
+/* ========== АНИМАЦИИ СТРАНИЦЫ ВХОДА/РЕГИСТРАЦИИ ========== */
+
+/* Появление карточки формы */
+.form-card {
+    animation: fadeInScale 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+@keyframes fadeInScale {
+    from { opacity: 0; transform: scale(0.97); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Переключение табов – плавное исчезновение/ появление */
+.form-pane {
+    transition: opacity 0.2s, transform 0.2s;
+}
+.form-pane.active-pane {
+    display: block;
+}
+.form-pane:not(.active-pane) {
+    display: none;
+}
+
+/* Анимация для полей ввода при фокусе */
+.input-group input {
+    transition: all 0.2s;
+}
+.input-group input:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,230,118,0.2);
+}
+
+/* Кнопка сабмита – эффект "волны" при нажатии */
+.submit-btn {
+    position: relative;
+    overflow: hidden;
+}
+.submit-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+}
+.submit-btn:active::after {
+    width: 200px;
+    height: 200px;
+}
+
+/* Анимация для ссылок в футере формы */
+.auth-footer a {
+    transition: all 0.2s;
+}
+.auth-footer a:hover {
+    text-shadow: 0 0 5px var(--primary-green);
+    letter-spacing: 0.3px;
+}

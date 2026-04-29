@@ -1,0 +1,235 @@
+/* ============================================
+   COMMON.CSS – общие стили для всех страниц PriceHunter
+   ============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg-gradient: radial-gradient(circle at 10% 20%, #0a0f1e, #03060c);
+    --card-bg: rgba(18, 25, 40, 0.75);
+    --card-border: rgba(0, 255, 170, 0.2);
+    --primary-green: #00e676;
+    --primary-blue: #2d7aff;
+    --text-white: #f0f4fa;
+    --text-muted: #b0c4de;
+    --input-bg: #10161f;
+    --input-border: #2a3748;
+    --header-bg: rgba(3, 8, 18, 0.95);
+    --footer-bg: #050a12;
+}
+
+body {
+    background: var(--bg-gradient);
+    color: var(--text-white);
+    font-family: 'Segoe UI', 'Inter', system-ui, sans-serif;
+    line-height: 1.5;
+    padding-top: 80px;
+    min-height: 100vh;
+}
+
+/* ========== ШАПКА ========== */
+.header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: var(--header-bg);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(0, 230, 118, 0.2);
+    padding: 0.8rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+}
+.logo-link { text-decoration: none; }
+.logo {
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary-green), var(--primary-blue));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+.burger-btn {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: var(--primary-green);
+    cursor: pointer;
+}
+
+/* ========== БУРГЕР-МЕНЮ ========== */
+.side-menu {
+    position: fixed;
+    top: 0;
+    right: -320px;
+    width: 300px;
+    height: 100%;
+    background: #0b111ecc;
+    backdrop-filter: blur(20px);
+    border-left: 1px solid var(--primary-green);
+    z-index: 1100;
+    transition: right 0.3s;
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+.side-menu.open { right: 0; }
+.menu-close {
+    align-self: flex-end;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.8rem;
+    cursor: pointer;
+}
+.menu-btn {
+    background: rgba(45, 122, 255, 0.1);
+    border: 1px solid var(--primary-blue);
+    padding: 0.9rem 1rem;
+    border-radius: 60px;
+    color: white;
+    font-weight: 600;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    cursor: pointer;
+    text-decoration: none;
+}
+.menu-btn:hover { background: var(--primary-blue); }
+.menu-divider {
+    height: 1px;
+    background: rgba(0,230,118,0.3);
+    margin: 0.5rem 0;
+}
+
+/* ========== ФУТЕР ========== */
+.footer {
+    background: var(--footer-bg);
+    margin-top: 4rem;
+    padding: 2rem 2rem 1rem;
+    border-top: 1px solid rgba(0,230,118,0.2);
+}
+.footer-content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+.social-icons {
+    display: flex;
+    gap: 1.2rem;
+}
+.social-icons a {
+    color: white;
+    font-size: 1.8rem;
+}
+.footer-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.footer-btn {
+    background: none;
+    border: 1px solid var(--primary-blue);
+    padding: 0.5rem 1.2rem;
+    border-radius: 40px;
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s, box-shadow 0.2s;
+}
+.copyright {
+    text-align: center;
+    margin-top: 2rem;
+    font-size: 0.75rem;
+    color: #5f7f9e;
+}
+
+/* ========== ОБЩАЯ АДАПТИВНОСТЬ (шапка, бургер, футер) ========== */
+@media (max-width: 767px) {
+    body { padding-top: 70px; }
+    .header { padding: 0.6rem 1.2rem; }
+    .logo { font-size: 1.6rem; }
+    .burger-btn { font-size: 1.6rem; }
+    .footer { margin-top: 2rem; padding: 1.5rem 1rem; }
+    .footer-content { flex-direction: column; text-align: center; }
+    .social-icons { justify-content: center; }
+    .footer-buttons { justify-content: center; }
+}
+
+/* ========== ОБЩИЕ АНИМАЦИИ ДЛЯ ВСЕХ СТРАНИЦ ========== */
+
+/* Плавное появление страницы */
+body {
+    animation: fadeIn 0.4s ease-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Анимация для всех кнопок и ссылок-кнопок */
+button, .menu-btn, .edit-btn, .save-btn, .cancel-btn, .footer-btn, .burger-btn {
+    transition: all 0.25s ease-in-out;
+}
+button:hover, .menu-btn:hover, .edit-btn:hover, .save-btn:hover, .cancel-btn:hover, .footer-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0, 230, 118, 0.2);
+}
+button:active, .menu-btn:active, .edit-btn:active {
+    transform: translateY(1px);
+}
+
+/* Бургер-меню – плавное появление иконки */
+.burger-btn {
+    transition: transform 0.2s, color 0.2s;
+}
+.burger-btn:hover {
+    transform: rotate(90deg);
+    color: var(--primary-blue);
+}
+
+/* Плавное открытие сайдбара */
+.side-menu {
+    transition: right 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+.side-menu.open {
+    right: 0;
+}
+.side-menu .menu-btn {
+    transform: translateX(20px);
+    opacity: 0;
+    animation: slideInMenu 0.3s forwards;
+}
+@keyframes slideInMenu {
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+/* Задержки для пунктов меню */
+.side-menu .menu-btn:nth-child(2) { animation-delay: 0.05s; }
+.side-menu .menu-btn:nth-child(3) { animation-delay: 0.1s; }
+.side-menu .menu-btn:nth-child(4) { animation-delay: 0.15s; }
+.side-menu .menu-btn:nth-child(5) { animation-delay: 0.2s; }
+
+/* Анимация для кнопок футера */
+.footer-btn:hover {
+    background: rgba(45, 122, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0, 230, 118, 0.2);
+}
+.footer-btn:active {
+    transform: translateY(1px);
+}

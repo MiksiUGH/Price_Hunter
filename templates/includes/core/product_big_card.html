@@ -1,0 +1,38 @@
+{% if product %}
+    <div class="big-card" data-id="{{ offer.id }}" style="background:#0f1825; border-radius:32px; padding:1.5rem;">
+        <h3 style="color:var(--primary-green);"><i class="fas fa-tag"></i> Найден товар</h3>
+        <div class="card-title" style="font-size:1.4rem;">{{ offer.name }}</div>
+        <div class="card-price" style="font-size:2rem;">{{ offer.price|floatformat:0 }} ₽</div>
+        <div class="card-meta">
+            <span>✅ {{ offer.availability|yesno:"В наличии,Нет в наличии" }}</span>
+            <span>⏱️ доставка: 
+                {% if offer.delivery_time == 1 %}
+                    Завтра
+                {% elif offer.delivery_time == 2 %}
+                    Послезавтра
+                {% else %}
+                    {{ offer.delivery_time }} дн.
+                {% endif %}
+            </span>
+        </div>
+        <div class="card-meta">
+            <span>🏪 {{ offer.marketplace }}</span>
+        </div>
+        <div class="card-actions" style="margin-top:20px;">
+            <button class="fav-btn" data-id="{{ offer.id }}">
+                <i class="far fa-heart"></i> В избранное
+            </button>
+            <button class="view-btn" data-url="{{ offer.url }}">
+                Перейти на маркетплейс
+            </button>
+        </div>
+        <p style="margin-top:12px; font-size:0.75rem;">
+            🔗 URL: {{ offer.url }}
+        </p>
+    </div>
+{% else %}
+    <div style="text-align: center; color: #ffaa66; padding: 2rem;">
+        <i class="fas fa-exclamation-triangle"></i> Товар не найден.
+        <br>Проверьте правильность URL или попробуйте другой маркетплейс.
+    </div>
+{% endif %}

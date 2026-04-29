@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'core/css/common.css' %}">
+    {% block styles %}{% endblock %}
+    <title>PriceHunter — {% block title %}{{ title }}{% endblock %}</title>
+</head>
+<body>
+{% include "includes/core/header.html" %}
+
+<main>
+    {% block main %}{% endblock %}
+</main>
+
+{% include "includes/core/footer.html" %}
+
+<script src="{% static 'core/js/common.js' %}"></script>
+{% block scripts %}{% endblock %}
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+</script>
+</body>
+</html>

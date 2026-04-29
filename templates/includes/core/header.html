@@ -1,0 +1,18 @@
+<header class="header">
+    <a href="{% url 'hunter' %}" class="logo-link"><div class="logo">🟢 PriceHunter</div></a>
+    <button class="burger-btn" id="burgerBtn"><i class="fas fa-bars"></i></button>
+</header>
+
+<div class="side-menu" id="sideMenu">
+    <button class="menu-close" id="closeMenuBtn"><i class="fas fa-times"></i></button>
+    {% if user.is_authenticated %}
+        <a href="{% url 'profile' %}" class="menu-btn"><i class="fas fa-user-circle"></i> Мой профиль</a>
+        <a href="{% url 'logout' %}" class="menu-btn"><i class="fas fa-sign-out-alt"></i> Выйти</a>
+    {% else %}
+        <a href="{% url 'login' %}" class="menu-btn"><i class="fas fa-sign-in-alt"></i> Войти</a>
+        <a href="{% url 'register' %}" class="menu-btn"><i class="fas fa-user-plus"></i> Зарегистрироваться</a>
+    {% endif %}
+    <div class="menu-divider"></div>
+    <a href="{% url 'instruction' %}" class="menu-btn"><i class="fas fa-book-open"></i> Инструкция</a>
+    <a href="{% url 'settings' %}" class="menu-btn"><i class="fas fa-sliders-h"></i> Настройки</a>
+</div>

@@ -1,0 +1,34 @@
+{% load humanize %}
+<div class="product-card" data-id="{{ offer.id }}">
+    <div class="card-title">{{ offer.name }}</div>
+    <div class="card-price">{{ offer.price|floatformat:0|intcomma }} ₽</div>
+    <div class="card-meta">
+        <span>📦 {% if offer.availability %}В наличии{% else %}Нет в наличии{% endif %}</span>
+        <span>🚚 
+            {% if offer.delivery_time == 1 %}
+                Завтра
+            {% elif offer.delivery_time == 2 %}
+                Послезавтра
+            {% else %}
+                {{ offer.delivery_time }} дн.
+            {% endif %}
+        </span>
+    </div>
+    <div class="card-meta">
+        <span>🏷️ {{ offer.marketplace }}</span>
+    </div>
+    <div class="card-actions">
+        {% if is_favorite %}
+            <button class="remove-fav-btn" data-id="{{ offer.id }}">
+                <i class="fas fa-trash-alt"></i> Удалить
+            </button>
+        {% else %}
+            <button class="fav-btn" data-id="{{ offer.id }}">
+                <i class="far fa-heart"></i> Изб.
+            </button>
+        {% endif %}
+        <button class="view-btn" data-url="{{ offer.url }}">
+            <i class="fas fa-external-link-alt"></i> Посмотреть
+        </button>
+    </div>
+</div>

@@ -1,0 +1,57 @@
+{% extends "includes/core/base.html" %}
+
+{% block title %}{{ block.super }}{% endblock title %}
+
+{% block styles %}<link href="{% static 'core/css/profile.css' %}"></link>{% endblock styles %}
+
+{% block main %}
+<main class="main-container">
+    {% if user.is_authenticated %}
+        <!-- Две колонки: профиль слева, активность и уведомления справа -->
+        <div class="profile-grid">
+            <div class="profile-sidebar">
+                <div class="avatar">
+                    <i class="fas fa-user-astronaut"></i>
+                </div>
+                <div class="profile-name">{{ user.get_full_name|default:user.username }}</div>
+                <div class="profile-email">{{ user.email }}</div>
+                <a href="{% url 'edit_profile' %}" class="edit-btn" style="display: inline-block; text-align: center; text-decoration: none;"><i class="fas fa-pen"></i> Редактировать профиль</a>
+                <button class="edit-btn logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Выйти из аккаунта</button>
+            </div>
+            <div class="profile-content">
+                <div class="info-card">
+                    <div class="info-title">📊 Активность</div>
+                    <div class="info-row"><span class="info-label">Дата регистрации:</span><span class="info-value">{{ user.date_joined|date:"d.m.Y" }}</span></div>
+                    <div class="info-row"><span class="info-label">Последний вход:</span><span class="info-value">{{ user.last_login|date:"d.m.Y H:i"|default:"—" }}</span></div>
+                    <div class="info-row"><span class="info-label">Избранных товаров:</span><span class="info-value" id="favoritesCount">{{ favorite_items|length }}</span></div>
+                </div>
+                <div class="info-card">
+                    <div class="info-title">🔔 Настройки уведомлений</div>
+                    <div class="info-row"><span class="info-label">Email-рассылка:</span><span class="info-value">Включена</span></div>
+                    <a href="{% url 'settings' %}" class="edit-btn" style="margin-top: 1rem; width: auto; padding: 0.4rem 1rem; display: inline-block; text-decoration: none;"><i class="fas fa-cog"></i> Управление</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Избранные товары – отдельная секция на всю ширину под двумя колонками -->
+        <div class="favorites-section">
+            <div class="favorites-title"><i class="fas fa-heart"></i> Избранные товары</div>
+            <div id="favoritesContainer" class="products-grid">
+                {% for item in favorite_items %}
+                    {% include "includes/core/product_card.html" with offer=item is_favorite=True %}
+                {% empty %}
+                    <div style="grid-column:1/-1; text-align:center; padding:2rem;">⭐ Нет избранных товаров. Добавьте их на главной странице.</div>
+                {% endfor %}
+            </div>
+        </div>
+    {% else %}
+        <div style="text-align: center; background: var(--card-bg); border-radius: 32px; padding: 3rem;">
+            <i class="fas fa-lock" style="font-size: 3rem; color: var(--primary-green);"></i>
+            <h2 style="margin: 1rem 0;">Доступ ограничен</h2>
+            <p>Пожалуйста, <a href="{% url 'login' %}" style="color: var(--primary-green);">войдите</a> или <a href="{% url 'register' %}" style="color: var(--primary-green);">зарегистрируйтесь</a>, чтобы просмотреть профиль.</p>
+        </div>
+    {% endif %}
+</main>
+{% endblock main %}
+
+{% block scripts %}<script src="{% static 'core/js/profile.js' %}"></script>{% endblock scripts %}
