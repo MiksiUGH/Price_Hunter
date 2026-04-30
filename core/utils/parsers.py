@@ -2,6 +2,7 @@
 import time
 import re
 import datetime
+import abc
 
 from selenium import webdriver, common
 from selenium.webdriver.chrome.options import Options
@@ -150,7 +151,79 @@ def str_in_date(str_date: str) -> datetime.date:
         return datetime.date.today() + datetime.timedelta(days=60)
 
 
-class WbParser:
+class AbstractParser(abc.ABC):
+    """Абстрактный класс парсера для работы с маркетплейсами."""
+
+    @staticmethod
+    @abc.abstractmethod
+    def search_by_query(query: str, answer_cnt: int = 20, price_limit: list[int] = None, delivery_limit: int = None) -> list[dict[str, str | bool | float]]:
+        """Поиск товаров на маркетплейсе по пользовательскому запросу с возможностью фильтрации.
+
+        :param query: Поисковый запрос (название товара или категория)
+        :type query: str
+        :param answer_cnt: Количество товаров для возврата (допустимый диапазон: 10–30), по умолчанию 20
+        :type answer_cnt: int, optional
+        :param price_limit: Диапазон цен для фильтрации в формате [min_price, max_price], по умолчанию None (без фильтрации)
+        :type price_limit: list[int], optional
+        :param delivery_limit: Максимальное количество дней для срока доставки, по умолчанию None (без ограничения)
+        :type delivery_limit: int, optional
+        :return: Список словарей с информацией о найденных товарах (отсортированных по возрастанию цены),
+            каждый словарь содержит ключи: 'name' (название), 'price' (цена), 'availability' (наличие),
+            'article_number' (артикул), 'url' (ссылка на товар), 'delivery_time' (срок доставки)
+        :rtype: list[dict[str, str | bool | float]]
+        """
+        ...
+
+    @staticmethod
+    @abc.abstractmethod
+    def search_by_url(url: str) -> dict[str, str | bool | float]:
+        """Получение подробной информации о конкретном товаре по его URL.
+
+        :param url: URL страницы товара на маркетплейсе
+        :type url: str
+        :return: Словарь с информацией о товаре, содержащий ключи:
+            'name' (название), 'price' (цена), 'availability' (наличие),
+            'article_number' (артикул), 'url' (ссылка), 'delivery_time' (срок доставки).
+            При ошибке возвращает словарь с ключом 'error' и описанием ошибки.
+        :rtype: dict[str, str | bool | float]
+        """
+        ...
+
+    @staticmethod
+    @abc.abstractmethod
+    def update_by_urls(urls: list[str]) -> list[dict[str, str | bool | float]] | None:
+        """Массовое обновление информации о нескольких товарах по их URL.
+
+        :param urls: Список URL страниц товаров для обновления информации
+        :type urls: list[str]
+        :return: Список словарей с обновлённой информацией о товарах
+            (каждый словарь соответствует формату из search_by_url).
+            При возникновении ошибки возвращает словарь с ключом 'error'.
+            Если все запросы завершились ошибкой, может вернуть None.
+        :rtype: list[dict[str, str | bool | float]] | None
+        """
+        ...
+
+    @staticmethod
+    @abc.abstractmethod
+    def update_by_url(dr: webdriver.Chrome, url: str) -> dict[str, float | bool]:
+        """Обновление информации о конкретном товаре (цена и наличие) по URL с использованием переданного драйвера.
+
+        :param dr: Экземпляр драйвера браузера (webdriver.Chrome), используемый для выполнения запросов
+        :type dr: webdriver.Chrome
+        :param url: URL страницы товара для обновления информации
+        :type url: str
+        :return: Словарь с обновлёнными данными о товаре, содержащий:
+            - 'new_price' (обновлённая цена, float) и 'availability' (наличие, bool),
+              если товар доступен;
+            - только 'availability' (bool), если товар отсутствует;
+            - при ошибке — словарь с ключом 'error' и описанием проблемы.
+        :rtype: dict[str, float | bool]
+        """
+        ...
+
+
+class WbParser(AbstractParser):
     """
     Парсер данных о товарах с ВБ
     """
@@ -304,6 +377,7 @@ class WbParser:
                             'article_number': article_number,
                             'url': url,
                             'delivery_time': delivery_time.strip().replace(',', ''),
+                            'marketplace': 'Wildberries',
                         }
                         result.append(product)
                         res_cnt -= 1
@@ -442,7 +516,7 @@ class WbParser:
             return {'error': e}
 
 
-class OzonParser:
+class OzonParser(AbstractParser):
     """
     Парсер данных о товарах с Ozon
     """
@@ -523,11 +597,8 @@ class OzonParser:
         ...
 
 
-if __name__ == '__main__':
-    res = WbParser.search_by_query('bbno$', price_limit=[3000, 4000], delivery_limit=5)
-    for r in res:
-        print(r)
-        print('=' * 60)
-    print(WbParser.search_by_url('https://www.wildberries.ru/catalog/57503465/detail.aspx?targetUrl=MI'))
-    print(WbParser.search_by_url('https://www.wildberries.ru/catalog/572503465/detail.aspx?targetUrl=MI'))
-    print(WbParser.update_by_urls([x['url'] for x in res]))
+class YandexMarketParser(AbstractParser):
+    """
+    Парсер данных о товарах с YandexMarket
+    """
+    ...
