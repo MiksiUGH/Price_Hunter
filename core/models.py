@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from .utils.normalize import normalize_name
+from core.utils.string_utils import normalize_name
 
 
 class Shop(models.Model):
