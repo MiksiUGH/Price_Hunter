@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+from .utils.normalize import normalize_name
+
 
 class Shop(models.Model):
     """
@@ -28,6 +30,17 @@ class Product(models.Model):
     slug = models.SlugField('Идентификатор', unique=True, db_index=True)
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
     updated_at = models.DateTimeField('Дата обновления', auto_now=True)
+    normalized_name = models.CharField(
+        max_length=500,
+        blank=True,
+        db_index=True,
+        verbose_name='Нормализованное название'
+    )
+
+    def save(self, *args, **kwargs):
+        if not self.normalized_name and self.name:
+            self.normalized_name = normalize_name(self.name)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f'{self.name}'
