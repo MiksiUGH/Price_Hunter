@@ -1,0 +1,5 @@
+{% for offer in offers %}
+    {% include "includes/core/product_card.html" with product=offer is_favorite=False %}
+{% empty %}
+    <div style="grid-column:1/-1; text-align:center; padding:2rem;">😞 Товары не найдены.</div>
+{% endfor %}
