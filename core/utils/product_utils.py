@@ -1,6 +1,6 @@
-"""Утилиты для работы сс продуктами"""
+"""Утилиты для работы с продуктами (поиск, создание, обновление)"""
 from difflib import SequenceMatcher
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from django.utils import timezone
 from django.utils.text import slugify
@@ -11,32 +11,34 @@ from core.utils.string_utils import normalize_name
 
 def get_or_create_product_by_name(name: str, similarity_threshold: float = 0.85) -> Product:
     """
-    
+    Находит существующий Product по нормализованному имени или создаёт новый.
+    Сначала ищет точное совпадение normalized_name, затем нечёткое (difflib).
+    При нахождении похожего обновляет оригинальное имя.
 
-    :param name: _description_
+    :param name: Исходное название товара (от парсера)
     :type name: str
-    :param similarity_threshold: _description_, defaults to 0.85
-    :type similarity_threshold: float, optional
-    :return: _description_
+    :param similarity_threshold: Порог схожести для нечёткого поиска (0..1)
+    :type similarity_threshold: float
+    :return: Объект Product (существующий или новый)
     :rtype: Product
     """
-    normalized = normalize_name(name)
-    product = Product.objects.filter(normalized_name=normalized).first()
+    normalized: str = normalize_name(name)
+    product: Product = Product.objects.filter(normalized_name=normalized).first()
     if product:
         if product.name != name:
             product.name = name
             product.save()
         return product
 
-    # нечёткий поиск (если точного совпадения нет)
-    all_products = Product.objects.all()
-    best_match = None
-    best_ratio = 0.0
+    all_products: Product = Product.objects.all()
+    best_match: Product | None = None
+    best_ratio: float = 0.0
     for p in all_products:
         ratio = SequenceMatcher(None, normalized, p.normalized_name).ratio()
         if ratio > best_ratio:
             best_ratio = ratio
             best_match = p
+
     if best_match and best_ratio >= similarity_threshold:
         if best_match.name != name:
             best_match.name = name
@@ -50,33 +52,35 @@ def get_or_create_product_by_name(name: str, similarity_threshold: float = 0.85)
     )
 
 
-def get_fresh_offers_for_product(product: Product, max_age_hours: int = 2):
+def get_fresh_offers_for_product(product: Product, max_age_hours: int = 2) -> list[Offer]:
     """
-    
+    Возвращает список Offer продукта, обновлённых не позже max_age_hours часов,
+    отсортированных по возрастанию цены.
 
-    :param product: _description_
+    :param product: Объект Product
     :type product: Product
-    :param max_age_hours: _description_, defaults to 2
-    :type max_age_hours: int, optional
-    :return: _description_
-    :rtype: _type_
+    :param max_age_hours: Максимальный возраст данных в часах
+    :type max_age_hours: int
+    :return: Список объектов Offer (может быть пустым)
+    :rtype: Offer
     """
-    cutoff = timezone.now() - timedelta(hours=max_age_hours)
+    cutoff: datetime = timezone.now() - timedelta(hours=max_age_hours)
     return list(product.offers.filter(last_updated__gte=cutoff, is_active=True).order_by('price'))
 
 
-def save_parsed_offer(parsed: dict, shop: Shop) -> Offer:
+def save_parsed_offer(parsed: dict[str, str | bool | float], shop: Shop) -> Offer:
     """
-    
+    Сохраняет один спарсенный товар (словарь от парсера) в БД.
+    Создаёт или обновляет Product, Offer и PriceHistory.
 
-    :param parsed: _description_
-    :type parsed: dict
-    :param shop: _description_
+    :param parsed: Словарь с данными товара (name, article_number, url, price, availability)
+    :type parsed: dict[str, str | bool | float]
+    :param shop: Объект Shop, к которому относится предложение
     :type shop: Shop
-    :return: _description_
+    :return: Объект Offer (созданный или обновлённый)
     :rtype: Offer
     """
-    product = get_or_create_product_by_name(parsed['name'])
+    product: Product = get_or_create_product_by_name(parsed['name'])
     offer, created = Offer.objects.get_or_create(
         product=product,
         shop=shop,
@@ -94,7 +98,8 @@ def save_parsed_offer(parsed: dict, shop: Shop) -> Offer:
         offer.last_updated = timezone.now()
         offer.save()
 
-    last_history = offer.price_history.first()
+    last_history: PriceHistory = offer.price_history.first()
     if not last_history or last_history.price != parsed['price']:
         PriceHistory.objects.create(offer=offer, price=parsed['price'], in_stock=parsed['availability'])
+
     return offer
