@@ -35,7 +35,6 @@ def query_search(request: HttpRequest) -> HttpResponse:
         if not query:
             return render(request, 'core/partials/search_results.html', {'offers': []})
 
-        # нормализация и валидация параметров
         try:
             limit: int = int(request.GET.get('limit', 20))
             limit = max(1, min(limit, 30))
@@ -60,7 +59,6 @@ def query_search(request: HttpRequest) -> HttpResponse:
         except ValueError:
             delivery_days = 9999
 
-        # ---- Шаг 1: поиск продукта в БД по нормализованному запросу ----
         normalized_query: str = normalize_name(query)
         product: Product = Product.objects.filter(normalized_name=normalized_query).first()
 
@@ -73,12 +71,10 @@ def query_search(request: HttpRequest) -> HttpResponse:
             fresh_offers.sort(key=lambda o: o.price)
             return render(request, 'core/partials/search_results.html', {'offers': fresh_offers[:limit]})
 
-        # ---- Шаг 2: не хватает – запускаем парсер ----
         needed: int = limit - len(fresh_offers)
         fetch_cnt: int = min(needed, 30)
         existing_keys: set[tuple[str, str | None]] = {(o.shop.slug, o.article) for o in fresh_offers}
 
-        # Получаем или создаём магазин Wildberries
         shop, _ = Shop.objects.get_or_create(
             slug='wb',
             defaults={
@@ -106,7 +102,6 @@ def query_search(request: HttpRequest) -> HttpResponse:
             new_offers.append(offer)
             existing_keys.add(key)
 
-        # Объединяем старые свежие и новые, сортируем и обрезаем
         all_offers: list[Offer] = fresh_offers + new_offers
         all_offers.sort(key=lambda o: o.price)
         result_offers: list[Offer] = all_offers[:limit]
