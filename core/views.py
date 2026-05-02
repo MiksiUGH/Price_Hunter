@@ -18,14 +18,14 @@ PARSERS_BY_SLUG = {
     'yandex': YandexMarketParser,
 }
 
-# Вспомогательные функции
+
 def get_shop_and_parser_by_url(url: str) -> tuple[str | None, AbstractParser | None]:
     """
-    Получение магазина и его парсера с помощью домена в url
+    Определяет магазин (slug) и соответствующий класс парсера по URL товара.
 
-    :param url: Исходный url
+    :param url: Полный URL страницы товара
     :type url: str
-    :return: Короткое название магазина(slug) и его парсер
+    :return: Кортеж (slug магазина, класс парсера) или (None, None) если магазин не поддерживается.
     :rtype: tuple[str | None, AbstractParser | None]
     """
     domain = urlparse(url).netloc.lower()
@@ -40,11 +40,14 @@ def get_shop_and_parser_by_url(url: str) -> tuple[str | None, AbstractParser | N
 
 def add_product_in_matches(p: Product, matches: list) -> None:
     """
-    Добавляет продукт в нужном виде в список возвращаемых
+    Формирует структуру данных для продукта и добавляет её в список matches.
 
-    :param p: Добавляемый продукт
+    Структура содержит сам продукт, минимальную и максимальную цену среди его активных предложений,
+    количество предложений и набор магазинов.
+
+    :param p: Объект Product
     :type p: Product
-    :param matches: Список возвращаемых продуктов
+    :param matches: Список, в который будет добавлен словарь с данными продукта
     :type matches: list
     """
     offers = p.offers.filter(is_active=True)
@@ -60,7 +63,6 @@ def add_product_in_matches(p: Product, matches: list) -> None:
     matches.append(product)
 
 
-# Основный views-функции
 def query_search(request: HttpRequest) -> HttpResponse:
     """
     Поиск товаров по названию с гибридным кешированием.
@@ -68,16 +70,16 @@ def query_search(request: HttpRequest) -> HttpResponse:
     2. Если есть свежие (не старше MAX_AGE_HOURS) предложения – возвращает их.
     3. Если не хватает – запускает парсер, сохраняет новые предложения и объединяет результаты.
 
-    Параметры GET:
+    Параметры GET (на данный момент не используются для фильтрации, но оставлены для будущего):
         query (str) – поисковый запрос.
-        limit (int, по умолч. 20) – количество товаров (1–30).
-        price_min (int, по умолч. 0) – минимальная цена.
-        price_max (int, по умолч. 999999) – максимальная цена.
-        delivery_days (int, по умолч. 9999) – максимальный срок доставки в днях.
+        limit (int) – количество товаров (1–30), по умолчанию 20.
+        price_min (int) – минимальная цена.
+        price_max (int) – максимальная цена.
+        delivery_days (int) – максимальный срок доставки в днях.
 
-    :param request: HTTP-запрос
+    :param request: HTTP-запрос.
     :type request: HttpRequest
-    :return: HTML-фрагмент с карточками товаров или сообщением об ошибке
+    :return: HTML-фрагмент с карточками продуктов или сообщение об ошибке.
     :rtype: HttpResponse
     """
     try:
@@ -131,11 +133,15 @@ def query_search(request: HttpRequest) -> HttpResponse:
 
 def url_search(request: HttpRequest) -> HttpResponse:
     """
-    
+    Поиск товара по прямому URL (одиночный товар).
+    Получает данные через парсер, сохраняет/обновляет в БД и возвращает большую карточку товара.
 
-    :param request: HTTP-запрос
+    Параметры GET:
+        url (str) – полный URL товара на поддерживаемом маркетплейсе.
+
+    :param request: HTTP-запрос.
     :type request: HttpRequest
-    :return: HTML-фрагмент с карточками товаров или сообщением об ошибке
+    :return: HTML-фрагмент с большой карточкой товара или сообщение об ошибке.
     :rtype: HttpResponse
     """
     try:
