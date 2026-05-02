@@ -7,6 +7,7 @@ from django.utils.text import slugify
 
 from core.models import Product, Offer, Shop, PriceHistory
 from core.utils.string_utils import normalize_name
+from core.utils.string_utils import str_in_date
 
 
 def get_or_create_product_by_name(name: str, similarity_threshold: float = 0.85) -> Product:
@@ -75,7 +76,7 @@ def save_parsed_offer(parsed: dict[str, str | bool | float], shop: Shop) -> Offe
 
     :param parsed: Словарь с данными товара (name, article_number, url, price, availability)
     :type parsed: dict[str, str | bool | float]
-    :param shop: Объект Shop, к которому относится предложение
+    :param shop: Магазин предложения
     :type shop: Shop
     :return: Объект Offer (созданный или обновлённый)
     :rtype: Offer
@@ -88,6 +89,7 @@ def save_parsed_offer(parsed: dict[str, str | bool | float], shop: Shop) -> Offe
         defaults={
             'url': parsed['url'],
             'price': parsed['price'],
+            'delivery_days': (str_in_date(parsed['delivery_time']) - datetime.date.today()).days,
             'in_stock': parsed['availability'],
             'is_active': True,
         }
@@ -95,6 +97,7 @@ def save_parsed_offer(parsed: dict[str, str | bool | float], shop: Shop) -> Offe
     if not created:
         offer.price = parsed['price']
         offer.in_stock = parsed['availability']
+        offer.delivery_days = (str_in_date(parsed['delivery_time']) - datetime.date.today()).days
         offer.last_updated = timezone.now()
         offer.save()
 

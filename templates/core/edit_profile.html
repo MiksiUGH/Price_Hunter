@@ -16,7 +16,7 @@
             </div>
         </div>
 
-        <form method="post" action="{% url 'edit_profile' %}">
+        <form method="post" action="{% url 'profile' %}">
             {% csrf_token %}
             <div class="form-group">
                 <label><i class="fas fa-user"></i> Имя пользователя (логин)</label>

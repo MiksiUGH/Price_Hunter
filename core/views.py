@@ -1,16 +1,66 @@
 """Файл со всеми вьюхами приложения"""
+from copy import deepcopy
+from urllib.parse import urlparse
+from difflib import SequenceMatcher
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
-from core.utils.parsers import WbParser
+from core.utils.parsers import OzonParser, WbParser, YandexMarketParser, AbstractParser
 from core.models import Product, Shop, Offer
-from core.utils.product_utils import get_fresh_offers_for_product, save_parsed_offer
+from core.utils.product_utils import save_parsed_offer
 from core.utils.string_utils import normalize_name
 
 
-MAX_AGE_HOURS = 2
+MIN_PRODUCTS_CNT = 8
+PARSERS_BY_SLUG = {
+    'wb': WbParser,
+    'ozon': OzonParser,
+    'yandex': YandexMarketParser,
+}
+
+# Вспомогательные функции
+def get_shop_and_parser_by_url(url: str) -> tuple[str | None, AbstractParser | None]:
+    """
+    Получение магазина и его парсера с помощью домена в url
+
+    :param url: Исходный url
+    :type url: str
+    :return: Короткое название магазина(slug) и его парсер
+    :rtype: tuple[str | None, AbstractParser | None]
+    """
+    domain = urlparse(url).netloc.lower()
+    if 'wildberries' in domain:
+        return 'wb', WbParser
+    if 'ozon' in domain:
+        return 'ozon', OzonParser
+    if 'yandex' or 'market' in domain:
+        return 'yandex', YandexMarketParser
+    return None, None
 
 
+def add_product_in_matches(p: Product, matches: list) -> None:
+    """
+    Добавляет продукт в нужном виде в список возвращаемых
+
+    :param p: Добавляемый продукт
+    :type p: Product
+    :param matches: Список возвращаемых продуктов
+    :type matches: list
+    """
+    offers = p.offers.filter(is_active=True)
+    if not offers:
+        return
+    product: dict[str, Product | int | set[str]] = {
+        'product': p,
+        'min_price': int(min([o.price for o in offers])),
+        'max_price': int(max([o.price for o in offers])),
+        'offers_cnt': offers.count(),
+        'shops': {o.shop.name for o in offers},
+    }
+    matches.append(product)
+
+
+# Основный views-функции
 def query_search(request: HttpRequest) -> HttpResponse:
     """
     Поиск товаров по названию с гибридным кешированием.
@@ -31,82 +81,82 @@ def query_search(request: HttpRequest) -> HttpResponse:
     :rtype: HttpResponse
     """
     try:
-        query: str = request.GET.get('query', '').strip()
+        query: str = normalize_name(request.GET.get('query', '').strip())
         if not query:
-            return render(request, 'core/partials/search_results.html', {'offers': []})
+            return render(request, 'core/partials/search_results.html', {'products': []})
 
-        try:
-            limit: int = int(request.GET.get('limit', 20))
-            limit = max(1, min(limit, 30))
-        except ValueError:
-            limit = 20
+        all_products = Product.objects.all()
+        best_matches: list[dict[str, Product | int | set[str]]] = []
+        best_ratio: float = 0.8
+        for p in all_products:
+            ratio = SequenceMatcher(None, query, p.normalized_name).ratio()
+            if ratio >= best_ratio:
+                add_product_in_matches(p, best_matches)
 
-        try:
-            price_min: int = int(request.GET.get('price_min', 0))
-            price_min = max(0, price_min)
-        except ValueError:
-            price_min = 0
+        best_matches = sorted(best_matches, key=lambda x: x['min_price'])
+        if len(best_matches) >= 8:
+            return render(request, 'core/partials/search_results.html', context={'products': best_matches[:MIN_PRODUCTS_CNT]})
 
-        try:
-            price_max: int = int(request.GET.get('price_max', 999999))
-            price_max = min(999999, price_max)
-        except ValueError:
-            price_max = 999999
+        limit: int = max(MIN_PRODUCTS_CNT - len(best_matches), 0)
+        while limit > 0:
+            old_matches: list[dict[str, Product | int | set[str]]] = deepcopy(best_matches)
+            for sl, shop in PARSERS_BY_SLUG.items():
+                if limit <= 0:
+                    break
+                parsed: list[dict[str, float | str | bool]] = shop.search_by_query(query, answer_cnt=limit)
+                if not parsed or (isinstance(parsed, dict) and 'error' in parsed):
+                    continue
 
-        try:
-            delivery_days: int = int(request.GET.get('delivery_days', 9999))
-            delivery_days = max(1, min(delivery_days, 999))
-        except ValueError:
-            delivery_days = 9999
+                parsed_products: set[Product] = set()
+                for offer in parsed:
+                    if Offer.objects.filter(article_number=offer['article_number'], url=offer['url']):
+                        continue
+                    shop_obj, _ = Shop.objects.get_or_create(slug=sl, defaults={'name': offer['marketplace']})
+                    parsed_offer = save_parsed_offer(offer, shop_obj)
+                    if parsed_offer.product.id not in [m['product'].id for m in best_matches]:
+                        parsed_products.add(parsed_offer.product)
 
-        normalized_query: str = normalize_name(query)
-        product: Product = Product.objects.filter(normalized_name=normalized_query).first()
+                for p in parsed_products:
+                    add_product_in_matches(p, best_matches)
+                    limit -= 1
 
-        fresh_offers: list[Offer] = []
-        if product:
-            fresh_offers = get_fresh_offers_for_product(product, max_age_hours=MAX_AGE_HOURS)
-            fresh_offers = [o for o in fresh_offers if price_min <= o.price <= price_max]
+            if best_matches == old_matches:
+                break
 
-        if len(fresh_offers) >= limit:
-            fresh_offers.sort(key=lambda o: o.price)
-            return render(request, 'core/partials/search_results.html', {'offers': fresh_offers[:limit]})
+        return render(request, 'core/partials/search_results.html', context={"products": best_matches})
 
-        needed: int = limit - len(fresh_offers)
-        fetch_cnt: int = min(needed, 30)
-        existing_keys: set[tuple[str, str | None]] = {(o.shop.slug, o.article) for o in fresh_offers}
+    except Exception:
+        return HttpResponse(status=500)
+
+
+def url_search(request: HttpRequest) -> HttpResponse:
+    """
+    
+
+    :param request: HTTP-запрос
+    :type request: HttpRequest
+    :return: HTML-фрагмент с карточками товаров или сообщением об ошибке
+    :rtype: HttpResponse
+    """
+    try:
+        query_url = request.GET.get('url', '').strip()
+        if not query_url:
+            return render(request, 'includes/core/product_big_card.html', {})
+
+        slug, parser_class = get_shop_and_parser_by_url(query_url)
+        if not slug:
+            return render(request, 'includes/core/product_big_card.html', {})
+
+        parsed = parser_class.search_by_url(query_url)
+        if not parsed or 'error' in parsed:
+            return render(request, 'includes/core/product_big_card.html', {})
 
         shop, _ = Shop.objects.get_or_create(
-            slug='wb',
-            defaults={
-                'name': 'Wildberries',
-                'search_url_template': 'https://www.wildberries.ru/catalog/0/search.aspx?search={query}'
-            }
+            slug=slug,
+            defaults={'name': parsed.get('marketplace', slug.capitalize()), 'search_url_template': ''}
         )
-
-        parser_result: list[dict[str, str | bool | float]] = WbParser.search_by_query(
-            query=query,
-            answer_cnt=fetch_cnt,
-            price_limit=[price_min, price_max] if price_min > 0 or price_max < 999999 else None,
-            delivery_limit=delivery_days if delivery_days < 9999 else None
-        )
-
-        if not parser_result or (isinstance(parser_result, dict) and 'error' in parser_result):
-            return render(request, 'core/partials/search_results.html', {'offers': fresh_offers})
-
-        new_offers: list[Offer] = []
-        for parsed in parser_result:
-            key: tuple[str, str | bool | float | None] = (shop.slug, parsed.get('article_number'))
-            if key in existing_keys:
-                continue
-            offer: Offer = save_parsed_offer(parsed, shop)
-            new_offers.append(offer)
-            existing_keys.add(key)
-
-        all_offers: list[Offer] = fresh_offers + new_offers
-        all_offers.sort(key=lambda o: o.price)
-        result_offers: list[Offer] = all_offers[:limit]
-
-        return render(request, 'core/partials/search_results.html', {'offers': result_offers})
+        offer = save_parsed_offer(parsed, shop)
+        return render(request, 'includes/core/product_big_card.html', {'offer': offer})
 
     except Exception:
         return HttpResponse(status=500)

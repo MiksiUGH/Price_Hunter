@@ -1,5 +1,6 @@
 """Утилиты для работы со строками"""
 import re
+import datetime
 
 
 STOP_WORDS: set[str] = {
@@ -29,3 +30,33 @@ def normalize_name(name: str) -> str:
     words = [w for w in words if w not in STOP_WORDS]
     normalized = ' '.join(words)
     return normalized
+
+
+def str_in_date(str_date: str) -> datetime.date:
+    """
+    Превращает строку с датой доставки в объект даты
+
+    :param str_date: Строка с датой
+    :type str_date: str
+    :return: Готовый объект даты
+    :rtype: datetime.date
+    """
+    months = {
+        'января': 1, 'февраля': 2, 'марта': 3, 'апреля': 4,
+        'мая': 5, 'июня': 6, 'июля': 7, 'августа': 8,
+        'сентября': 9, 'октября': 10, 'ноября': 11, 'декабря': 12
+    }
+    try:
+        if str_date.capitalize() == 'Завтра':
+            return datetime.date.today() + datetime.timedelta(days=1)
+        elif str_date.capitalize() == 'Послезавтра':
+            return datetime.date.today() + datetime.timedelta(days=2)
+        else:
+            match = re.match(r'(\d{1,2})\s+(\w+)', str_date)
+            day = int(match.group(1))
+            month_name = match.group(2)
+            month = months[month_name]
+            current_year = datetime.datetime.now().year
+            return datetime.date(current_year, month, day)
+    except Exception:
+        return datetime.date.today() + datetime.timedelta(days=60)

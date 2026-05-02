@@ -54,6 +54,7 @@ class Offer(models.Model):
     article = models.CharField('Артикул', max_length=100, blank=True, null=True, db_index=True)
     price = models.DecimalField('Текущая цена', decimal_places=2, max_digits=10)
     in_stock = models.BooleanField('Есть в наличии', default=True)
+    delivery_days = models.PositiveSmallIntegerField('Срок доставки', null=True, blank=True)
     is_active = models.BooleanField('Активно ли', default=True)
     last_updated = models.DateTimeField('Дата последнего обновления', auto_now=True)
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)

@@ -14,6 +14,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 from fake_useragent import UserAgent
 from webdriver_manager.chrome import ChromeDriverManager
+from .string_utils import str_in_date
 
 
 OZON_URL: str = 'https://www.ozon.ru/search/?from_global=true&text='
@@ -119,36 +120,6 @@ def price_in_float(price: str) -> float | None:
         return float(cleaned)
     except ValueError:
         return None
-
-
-def str_in_date(str_date: str) -> datetime.date:
-    """
-    Превращает строку с датой доставки в объект даты
-
-    :param str_date: Строка с датой
-    :type str_date: str
-    :return: Готовый объект даты
-    :rtype: datetime.date
-    """
-    months = {
-        'января': 1, 'февраля': 2, 'марта': 3, 'апреля': 4,
-        'мая': 5, 'июня': 6, 'июля': 7, 'августа': 8,
-        'сентября': 9, 'октября': 10, 'ноября': 11, 'декабря': 12
-    }
-    try:
-        if str_date.capitalize() == 'Завтра':
-            return datetime.date.today() + datetime.timedelta(days=1)
-        elif str_date.capitalize() == 'Послезавтра':
-            return datetime.date.today() + datetime.timedelta(days=2)
-        else:
-            match = re.match(r'(\d{1,2})\s+(\w+)', str_date)
-            day = int(match.group(1))
-            month_name = match.group(2)
-            month = months[month_name]
-            current_year = datetime.datetime.now().year
-            return datetime.date(current_year, month, day)
-    except Exception:
-        return datetime.date.today() + datetime.timedelta(days=60)
 
 
 class AbstractParser(abc.ABC):
@@ -434,6 +405,7 @@ class WbParser(AbstractParser):
                     'article_number': article_number,
                     'url': url,
                     'delivery_time': delivery_time.strip().replace(',', ''),
+                    'marketplace': 'Wildberries',
                 }
                 return product
 

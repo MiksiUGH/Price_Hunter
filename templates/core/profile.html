@@ -8,7 +8,6 @@
 {% block main %}
 <main class="main-container">
     {% if user.is_authenticated %}
-        <!-- Две колонки: профиль слева, активность и уведомления справа -->
         <div class="profile-grid">
             <div class="profile-sidebar">
                 <div class="avatar">
@@ -16,7 +15,7 @@
                 </div>
                 <div class="profile-name">{{ user.get_full_name|default:user.username }}</div>
                 <div class="profile-email">{{ user.email }}</div>
-                <a href="{% url 'edit_profile' %}" class="edit-btn" style="display: inline-block; text-align: center; text-decoration: none;"><i class="fas fa-pen"></i> Редактировать профиль</a>
+                <a href="{% url 'profile' %}" class="edit-btn" style="display: inline-block; text-align: center; text-decoration: none;"><i class="fas fa-pen"></i> Редактировать профиль</a>
                 <button class="edit-btn logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Выйти из аккаунта</button>
             </div>
             <div class="profile-content">
