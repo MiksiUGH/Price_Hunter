@@ -2,6 +2,7 @@
 {% load static %}
 {% load humanize %}
 
+{% block styles %}<link href="{% static 'core/css/product_offers.css' %}">{% endblock styles %}
 {% block title %}{{ product.name }} — предложения{% endblock %}
 
 {% block main %}
@@ -63,7 +64,7 @@
         {% for offer in offers %}
             {% include "includes/core/product_card.html" with offer=offer is_favorite=offer.is_favorite %}
         {% empty %}
-            <div style="grid-column:1/-1; text-align:center; padding:2rem;">😞 Нет предложений, соответствующих фильтрам.</div>
+            <div style="grid-column:1/-1; text-align:center; padding:2rem;">😞 У данного товара нет активных предложений.</div>
         {% endfor %}
     </div>
 </main>

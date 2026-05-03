@@ -1,0 +1,87 @@
+/* ============================================
+   PRODUCT_OFFERS.CSS – стили страницы предложений
+   ============================================ */
+
+/* Шапка продукта */
+.product-header {
+    margin-bottom: 2.5rem;
+    text-align: center;
+}
+
+.product-header h1 {
+    font-size: 2.2rem;
+    background: linear-gradient(135deg, #ffffff, var(--primary-green), #3b82f6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 0.75rem;
+    word-break: break-word;
+}
+
+.product-summary {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    padding: 0.75rem 1.8rem;
+    border-radius: 60px;
+    width: fit-content;
+    margin: 0 auto;
+    font-size: 0.95rem;
+    border: 1px solid rgba(0, 230, 118, 0.3);
+}
+
+.product-summary p {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.product-summary i {
+    color: var(--primary-green);
+}
+
+/* Фильтры – уже есть в main.css, но сохраним отступы */
+.filters-grid {
+    margin-bottom: 1.5rem;
+}
+
+/* Сортировка – отступ сверху меньше */
+.sort-row {
+    margin: 1rem 0 2rem;
+}
+
+/* Карточки офферов – небольшая тень при ховере (переопределяем, если нужно) */
+.product-card .fav-btn,
+.product-card .remove-fav-btn {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--primary-green);
+    transition: all 0.2s;
+}
+
+.product-card .fav-btn:hover,
+.product-card .remove-fav-btn:hover {
+    background: var(--primary-green);
+    color: #000;
+    transform: scale(1.02);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .product-header h1 {
+        font-size: 1.6rem;
+    }
+    .product-summary {
+        flex-direction: column;
+        gap: 0.6rem;
+        padding: 0.6rem 1.2rem;
+        border-radius: 32px;
+        font-size: 0.85rem;
+    }
+    .product-summary p {
+        justify-content: center;
+    }
+}
