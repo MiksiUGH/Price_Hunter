@@ -8,7 +8,7 @@ urlpatterns = [
     path('url_search', url_search, name='url_search'),
 ]
 
-"""path('<int:id>/offers', product_offers, name='product_offers'),
+"""path('<slug:slug>/offers', product_offers, name='product_offers'),
     path('profile', profile, name='profile'),
     path('favorites/<int:id>', favorites, name='favorites'),
     path('login', login, name='login'),

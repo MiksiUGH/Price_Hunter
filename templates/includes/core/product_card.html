@@ -3,19 +3,19 @@
     <div class="card-title">{{ offer.name }}</div>
     <div class="card-price">{{ offer.price|floatformat:0|intcomma }} ₽</div>
     <div class="card-meta">
-        <span>📦 {% if offer.availability %}В наличии{% else %}Нет в наличии{% endif %}</span>
+        <span>📦 {% if offer.in_stock %}В наличии{% else %}Нет в наличии{% endif %}</span>
         <span>🚚 
-            {% if offer.delivery_time == 1 %}
+            {% if offer.delivery_days == 1 %}
                 Завтра
-            {% elif offer.delivery_time == 2 %}
+            {% elif offer.delivery_days == 2 %}
                 Послезавтра
             {% else %}
-                {{ offer.delivery_time }} дн.
+                {{ offer.delivery_days }} дн.
             {% endif %}
         </span>
     </div>
     <div class="card-meta">
-        <span>🏷️ {{ offer.marketplace }}</span>
+        <span>🏷️ {{ offer.shop.name }}</span>
     </div>
     <div class="card-actions">
         {% if is_favorite %}

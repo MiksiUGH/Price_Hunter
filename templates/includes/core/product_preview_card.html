@@ -1,0 +1,16 @@
+{% load humanize %}
+<div class="product-card" data-product-id="{{ product.id }}">
+    <div class="card-title">{{ product.name }}</div>
+    <div class="card-price">
+        {{ min_price|floatformat:0|intcomma }} ₽ – {{ max_price|floatformat:0|intcomma }} ₽
+    </div>
+    <div class="card-meta">
+        <span>📦 Предложений: {{ offers_cnt }}</span>
+        <span>🏷️ {{ shops|join:", " }}</span>
+    </div>
+    <div class="card-actions">
+        <a href="{% url 'product_offers' product.slug %}" class="view-offers-btn">
+            <i class="fas fa-list-ul"></i> Посмотреть предложения
+        </a>
+    </div>
+</div>
