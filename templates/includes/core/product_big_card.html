@@ -4,19 +4,19 @@
         <div class="card-title" style="font-size:1.4rem;">{{ offer.name }}</div>
         <div class="card-price" style="font-size:2rem;">{{ offer.price|floatformat:0 }} ₽</div>
         <div class="card-meta">
-            <span>✅ {{ offer.availability|yesno:"В наличии,Нет в наличии" }}</span>
+            <span>✅ {{ offer.in_stock|yesno:"В наличии,Нет в наличии" }}</span>
             <span>⏱️ доставка: 
-                {% if offer.delivery_time == 1 %}
+                {% if offer.delivery_days == 1 %}
                     Завтра
-                {% elif offer.delivery_time == 2 %}
+                {% elif offer.delivery_days == 2 %}
                     Послезавтра
                 {% else %}
-                    {{ offer.delivery_time }} дн.
+                    {{ offer.delivery_days }} дн.
                 {% endif %}
             </span>
         </div>
         <div class="card-meta">
-            <span>🏪 {{ offer.marketplace }}</span>
+            <span>🏪 {{ offer.shop.name }}</span>
         </div>
         <div class="card-actions" style="margin-top:20px;">
             <button class="fav-btn" data-id="{{ offer.id }}">

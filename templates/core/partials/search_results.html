@@ -1,5 +1,5 @@
-{% for product in products %}
-    {% include "includes/core/product_card.html" with product=product is_favorite=False %}
+{% for item in products %}
+    {% include "includes/core/product_preview_card.html" with product=item.product min_price=item.min_price max_price=item.max_price offers_cnt=item.offers_cnt shops=item.shops %}
 {% empty %}
     <div style="grid-column:1/-1; text-align:center; padding:2rem;">😞 Товары не найдены.</div>
 {% endfor %}

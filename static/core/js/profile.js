@@ -66,54 +66,51 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Удаление из избранного
+    // Удаление из избранного (с удалением карточки)
     async function removeFromFavorites(btn) {
-        const productId = btn.getAttribute('data-id');
-        if (!productId) return;
+        const offerId = btn.getAttribute('data-id');
+        if (!offerId) return;
 
         try {
-            const response = await fetch(`/hunter/favorites/${productId}/`, {
+            const response = await fetch(`/hunter/favorites/${offerId}/`, {
                 method: 'DELETE',
-                headers: {
-                    'X-CSRFToken': csrftoken,
-                    'Content-Type': 'application/json'
-                }
+                headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' }
             });
+            if (response.status === 401) {
+                // Показываем красивое модальное окно для авторизации (из common.js)
+                if (typeof showAuthModal === 'function') showAuthModal();
+                else alert('Пожалуйста, войдите в аккаунт.');
+                return;
+            }
             if (!response.ok) throw new Error('Ошибка сервера');
 
-            // Удаляем карточку из DOM
             const card = btn.closest('.product-card');
             if (card) card.remove();
 
-            // Обновляем счётчик избранного
             const countSpan = document.getElementById('favoritesCount');
             if (countSpan) {
                 const remaining = document.querySelectorAll('.favorites-section .product-card').length;
                 countSpan.innerText = remaining;
             }
 
-            // Если избранных не осталось – показываем сообщение
             const container = document.getElementById('favoritesContainer');
             if (container && container.querySelectorAll('.product-card').length === 0) {
                 container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem;">⭐ Нет избранных товаров. Добавьте их на главной странице.</div>';
             }
         } catch (error) {
             console.error(error);
-            // Вместо alert – красивое модальное окно
             showErrorModal('Не удалось удалить товар из избранного. Попробуйте позже.');
         }
     }
 
-    // Навешиваем обработчики на кнопки удаления
+    // Навешиваем обработчики на кнопки .remove-fav-btn в профиле
     document.querySelectorAll('.remove-fav-btn').forEach(btn => {
-        // Убираем возможные старые обработчики, чтобы не было дублей
-        btn.removeEventListener('click', removeHandler);
-        btn.addEventListener('click', removeHandler);
-        function removeHandler(e) {
+        btn.removeEventListener('click', profileRemoveHandler);
+        function profileRemoveHandler(e) {
             e.preventDefault();
             removeFromFavorites(btn);
         }
-        // сохраним ссылку на обработчик (для чистоты)
-        btn._removeHandler = removeHandler;
+        btn.addEventListener('click', profileRemoveHandler);
+        btn._profileRemoveHandler = profileRemoveHandler;
     });
 });
