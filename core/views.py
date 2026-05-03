@@ -1,24 +1,24 @@
 """Файл со всеми вьюхами приложения"""
-from copy import deepcopy
 from urllib.parse import urlparse
 from difflib import SequenceMatcher
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 
 from core.utils.parsers import OzonParser, WbParser, YandexMarketParser, AbstractParser
-from core.models import Product, Shop, Offer
+from core.models import Product, Shop, Offer, Subscription
 from core.utils.product_utils import save_parsed_offer
 from core.utils.string_utils import normalize_name
 
 
-MIN_PRODUCTS_CNT = 8
-PARSERS_BY_SLUG = {
+CACHE_PRODUCTS_THRESHOLD: int = 8
+PARSERS_BY_SLUG: dict[str, AbstractParser] = {
     'wb': WbParser,
     'ozon': OzonParser,
     'yandex': YandexMarketParser,
 }
 
 
+# Вспомогательные функции
 def get_shop_and_parser_by_url(url: str) -> tuple[str | None, AbstractParser | None]:
     """
     Определяет магазин (slug) и соответствующий класс парсера по URL товара.
@@ -63,6 +63,26 @@ def add_product_in_matches(p: Product, matches: list) -> None:
     matches.append(product)
 
 
+def check_name_matches(name1: str, name2: str, best_ratio: float = 0.8) -> bool:
+    """
+    Сравнивает 2 имени на похожесть
+
+    :param name1: Первое имя
+    :type name1: str
+    :param name2: Второе имя
+    :type name2: str
+    :param best_ratio: Порог схожести, default 0.8
+    :type best_ratio: float
+    :return: True, если имена схожи
+    :rtype: bool
+    """
+    ratio = SequenceMatcher(None, name1, name2).ratio()
+    if ratio >= best_ratio:
+        return True
+    return False
+
+
+# Основные view-функции
 def query_search(request: HttpRequest) -> HttpResponse:
     """
     Поиск товаров по названию с гибридным кешированием.
@@ -70,12 +90,8 @@ def query_search(request: HttpRequest) -> HttpResponse:
     2. Если есть свежие (не старше MAX_AGE_HOURS) предложения – возвращает их.
     3. Если не хватает – запускает парсер, сохраняет новые предложения и объединяет результаты.
 
-    Параметры GET (на данный момент не используются для фильтрации, но оставлены для будущего):
+    Параметры GET:
         query (str) – поисковый запрос.
-        limit (int) – количество товаров (1–30), по умолчанию 20.
-        price_min (int) – минимальная цена.
-        price_max (int) – максимальная цена.
-        delivery_days (int) – максимальный срок доставки в днях.
 
     :param request: HTTP-запрос.
     :type request: HttpRequest
@@ -89,42 +105,37 @@ def query_search(request: HttpRequest) -> HttpResponse:
 
         all_products = Product.objects.all()
         best_matches: list[dict[str, Product | int | set[str]]] = []
-        best_ratio: float = 0.8
         for p in all_products:
-            ratio = SequenceMatcher(None, query, p.normalized_name).ratio()
-            if ratio >= best_ratio:
+            if check_name_matches(query, p.normalized_name):
+                add_product_in_matches(p, best_matches)
+
+        if best_matches:
+            best_matches = sorted(best_matches, key=lambda x: x['min_price'])
+
+        if len(best_matches) >= 8:
+            return render(request, 'core/partials/search_results.html', context={'products': best_matches})
+
+        limit: int = max(CACHE_PRODUCTS_THRESHOLD - len(best_matches), 1)
+        for sl, shop in PARSERS_BY_SLUG.items():
+            if limit <= 0:
+                break
+            parsed: list[dict[str, float | str | bool]] = shop.search_by_query(query, answer_cnt=limit * 2)
+            if not parsed or (isinstance(parsed, dict) and 'error' in parsed):
+                continue
+
+            for offer in parsed:
+                if Offer.objects.filter(article_number=offer['article_number'], url=offer['url']):
+                    continue
+                shop_obj, _ = Shop.objects.get_or_create(slug=sl, defaults={'name': offer['marketplace']})
+                save_parsed_offer(offer, shop_obj)
+
+        all_products = Product.objects.all()
+        best_matches.clear()
+        for p in all_products:
+            if check_name_matches(query, p.normalized_name):
                 add_product_in_matches(p, best_matches)
 
         best_matches = sorted(best_matches, key=lambda x: x['min_price'])
-        if len(best_matches) >= 8:
-            return render(request, 'core/partials/search_results.html', context={'products': best_matches[:MIN_PRODUCTS_CNT]})
-
-        limit: int = max(MIN_PRODUCTS_CNT - len(best_matches), 0)
-        while limit > 0:
-            old_matches: list[dict[str, Product | int | set[str]]] = deepcopy(best_matches)
-            for sl, shop in PARSERS_BY_SLUG.items():
-                if limit <= 0:
-                    break
-                parsed: list[dict[str, float | str | bool]] = shop.search_by_query(query, answer_cnt=limit)
-                if not parsed or (isinstance(parsed, dict) and 'error' in parsed):
-                    continue
-
-                parsed_products: set[Product] = set()
-                for offer in parsed:
-                    if Offer.objects.filter(article_number=offer['article_number'], url=offer['url']):
-                        continue
-                    shop_obj, _ = Shop.objects.get_or_create(slug=sl, defaults={'name': offer['marketplace']})
-                    parsed_offer = save_parsed_offer(offer, shop_obj)
-                    if parsed_offer.product.id not in [m['product'].id for m in best_matches]:
-                        parsed_products.add(parsed_offer.product)
-
-                for p in parsed_products:
-                    add_product_in_matches(p, best_matches)
-                    limit -= 1
-
-            if best_matches == old_matches:
-                break
-
         return render(request, 'core/partials/search_results.html', context={"products": best_matches})
 
     except Exception:
@@ -166,3 +177,44 @@ def url_search(request: HttpRequest) -> HttpResponse:
 
     except Exception:
         return HttpResponse(status=500)
+
+
+def product_offers(request: HttpRequest, slug: str) -> HttpResponse:
+    """
+    Отображает страницу со всеми активными предложениями (Offer) для заданного продукта.
+    Для авторизованных пользователей помечает избранные предложения (is_favorite).
+    Вычисляет минимальную и максимальную цену среди всех предложений продукта.
+
+    :param request: Http-запрос
+    :type request: HttpRequest
+    :param slug: Уникальный идентификатор (slug) продукта
+    :type slug: str
+    :return: HTTP-ответ с рендером шаблона core/product_offers.html
+    :rtype: HttpResponse
+    """
+    product: Product = get_object_or_404(Product, slug=slug)
+
+    offers: list[dict[str, Offer | bool]] = [{'offer': o, 'is_favorite': False} for o in product.offers.filter(is_active=True).select_related('shop')]
+    if not offers:
+        return render(request, 'core/product_offers.html', context={})
+
+    if request.user.is_authenticated:
+        favorite_offers: set[int] = set(Subscription.objects.filter(user=request.user, is_active=True).values_list('offer_id', flat=True))
+        if favorite_offers:
+            for o in offers:
+                if int(o['offer'].id) in favorite_offers:
+                    o['is_favorite'] = True
+
+    offers = sorted(offers, key=lambda x: x['offer'].price)
+    try:
+        min_price: int = min([o['offer'].price for o in offers])
+        max_price: int = max([o['offer'].price for o in offers])
+    except ValueError:
+        min_price, max_price = 0, 0
+
+    return render(request, 'core/product_offers.html', context={
+        'offers': offers,
+        'product': product,
+        'min_price': min_price,
+        'max_price': max_price,
+    })

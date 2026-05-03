@@ -21,18 +21,18 @@
             <div class="filter-label">🏪 Маркетплейсы</div>
             <div class="custom-select multi-select-trigger"><span>Выбрать</span> <i class="fas fa-chevron-down"></i></div>
             <div class="custom-select-dropdown multi-dropdown">
-                <label><input type="checkbox" value="all" id="marketAll" {% if 'all' in selected_marketplaces or not selected_marketplaces %}checked{% endif %}> Все</label>
-                <label><input type="checkbox" value="Ozon" {% if 'Ozon' in selected_marketplaces %}checked{% endif %}> Ozon</label>
-                <label><input type="checkbox" value="Wildberries" {% if 'Wildberries' in selected_marketplaces %}checked{% endif %}> Wildberries</label>
-                <label><input type="checkbox" value="YandexMarket" {% if 'YandexMarket' in selected_marketplaces %}checked{% endif %}> Яндекс Маркет</label>
+                <label><input type="checkbox" value="all" id="marketAll" checked> Все</label>
+                <label><input type="checkbox" value="Ozon"> Ozon</label>
+                <label><input type="checkbox" value="Wildberries"> Wildberries</label>
+                <label><input type="checkbox" value="YandexMarket"> Яндекс Маркет</label>
             </div>
         </div>
 
         <div class="filter-card">
             <div class="filter-label">💰 Цена (₽)</div>
             <div class="price-range">
-                <input type="number" id="priceFrom" placeholder="От" value="{{ selected_price_min }}">
-                <input type="number" id="priceTo" placeholder="До" value="{{ selected_price_max }}">
+                <input type="number" id="priceFrom" placeholder="От" value="{{ min_price }}">
+                <input type="number" id="priceTo" placeholder="До" value="{{ max_price }}">
             </div>
         </div>
 
@@ -41,11 +41,11 @@
             <div class="custom-select delivery-trigger"><span id="deliverySelectedLabel">Любой</span> <i class="fas fa-chevron-down"></i></div>
             <div class="custom-select-dropdown delivery-dropdown">
                 <div class="radio-group" id="deliveryRadioGroup">
-                    <label><input type="radio" name="deliveryRadio" value="2" {% if selected_delivery_days == 2 %}checked{% endif %}> до послезавтра</label>
-                    <label><input type="radio" name="deliveryRadio" value="3" {% if selected_delivery_days == 3 %}checked{% endif %}> до 3 дней</label>
-                    <label><input type="radio" name="deliveryRadio" value="5" {% if selected_delivery_days == 5 %}checked{% endif %}> до 5 дней</label>
-                    <label><input type="radio" name="deliveryRadio" value="7" {% if selected_delivery_days == 7 %}checked{% endif %}> до 7 дней</label>
-                    <label><input type="radio" name="deliveryRadio" value="9999" {% if selected_delivery_days == 9999 %}checked{% endif %}> любой</label>
+                    <label><input type="radio" name="deliveryRadio" value="2"> до послезавтра</label>
+                    <label><input type="radio" name="deliveryRadio" value="3"> до 3 дней</label>
+                    <label><input type="radio" name="deliveryRadio" value="5"> до 5 дней</label>
+                    <label><input type="radio" name="deliveryRadio" value="7"> до 7 дней</label>
+                    <label><input type="radio" name="deliveryRadio" value="9999" checked> Любой</label>
                 </div>
             </div>
         </div>
@@ -53,16 +53,16 @@
 
     <div class="sort-row">
         <select id="sortPrice" class="sort-select">
-            <option value="none" {% if sort_price == 'none' %}selected{% endif %}>💰 Цена: без разницы</option>
-            <option value="asc" {% if sort_price == 'asc' %}selected{% endif %}>💰 Цена: по возрастанию</option>
-            <option value="desc" {% if sort_price == 'desc' %}selected{% endif %}>💰 Цена: по убыванию</option>
+            <option value="none" selected>💰 Цена: без разницы</option>
+            <option value="asc">💰 Цена: по возрастанию</option>
+            <option value="desc">💰 Цена: по убыванию</option>
         </select>
     </div>
 
     <!-- Список предложений -->
     <div id="offersContainer" class="products-grid">
         {% for offer in offers %}
-            {% include "includes/core/product_card.html" with offer=offer is_favorite=offer.is_favorite %}
+            {% include "includes/core/product_card.html" with offer=offer.offer is_favorite=offer.is_favorite %}
         {% empty %}
             <div style="grid-column:1/-1; text-align:center; padding:2rem;">😞 У данного товара нет активных предложений.</div>
         {% endfor %}
