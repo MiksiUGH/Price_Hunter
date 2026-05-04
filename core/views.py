@@ -394,14 +394,22 @@ class ProfileView(View):
 
 
 class SettingsView(View):
-    """"""
+    """
+    Управление пользовательскими настройками (тема, валюта, интервал проверок, email-уведомления).
+    
+    GET /settings/ - получение текущих настроек пользователя.
+    PUT /settings/ - изменение текущих настроек пользователя.
+    """
     def get(self, request: HttpRequest) -> HttpResponse:
         """
+        Возвращает текущие настройки пользователя в формате JSON.
         
-
-        :param request: _description_
+        Проверяет авторизацию пользователя. Если пользователь не авторизован, возвращает ошибку 401.
+        Получает или создает объект настроек пользователя и возвращает его параметры.
+        
+        :param request: входящий HTTP-запрос
         :type request: HttpRequest
-        :return: _description_
+        :return: JSON-ответ с текущими настройками или ошибку
         :rtype: HttpResponse
         """
         try:
@@ -423,11 +431,14 @@ class SettingsView(View):
 
     def put(self, request: HttpRequest) -> HttpResponse:
         """
+        Обновляет настройки пользователя на основе переданных данных.
         
-
-        :param request: _description_
+        Проверяет авторизацию пользователя. Валидирует новые настройки перед сохранением.
+        Обновляет только те параметры, которые присутствуют в запросе и проходят валидацию.
+        
+        :param request: входящий HTTP-запрос с новыми настройками
         :type request: HttpRequest
-        :return: _description_
+        :return: HTTP-ответ со статусом операции
         :rtype: HttpResponse
         """
         try:
