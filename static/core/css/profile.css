@@ -1,5 +1,6 @@
 /* ============================================
    PROFILE.CSS – страница профиля пользователя
+   (только специфичные стили, общие вынесены в common.css)
    ============================================ */
 
 .main-container {
@@ -34,6 +35,10 @@
     justify-content: center;
     font-size: 3rem;
     color: #000;
+    transition: transform 0.3s ease;
+}
+.avatar:hover {
+    transform: rotate(5deg) scale(1.05);
 }
 .profile-name {
     font-size: 1.5rem;
@@ -53,10 +58,12 @@
     cursor: pointer;
     width: 100%;
     margin-top: 0.5rem;
+    text-align: center;
+    display: inline-block;
 }
 .logout-btn {
     background: rgba(255,94,126,0.2);
-    border: 1px solid #ff5e7e;
+    border: 1px solid var(--danger);
     color: #ff9eae;
     margin-top: 1rem;
 }
@@ -83,6 +90,12 @@
     justify-content: space-between;
     padding: 0.7rem 0;
     border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: background 0.2s;
+}
+.info-row:hover {
+    background: rgba(0, 230, 118, 0.05);
+    border-radius: 12px;
+    padding-left: 0.5rem;
 }
 .info-label {
     color: var(--text-muted);
@@ -93,6 +106,11 @@
 .favorites-section {
     margin-top: 2rem;
     width: 100%;
+    animation: slideUp 0.5s ease-out;
+}
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 .favorites-title {
     font-size: 1.5rem;
@@ -101,62 +119,8 @@
     border-left: 3px solid var(--primary-green);
     padding-left: 1rem;
 }
-.products-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 1.5rem;
-}
-@media (min-width: 600px) and (max-width: 899px) {
-    .products-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-@media (min-width: 900px) {
-    .products-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-@media (max-width: 599px) {
-    .products-grid {
-        grid-template-columns: 1fr;
-    }
-}
-.product-card {
-    background: var(--card-bg);
-    backdrop-filter: blur(8px);
-    border-radius: 28px;
-    padding: 1.2rem;
-    border: 1px solid var(--card-border);
-}
-.card-price {
-    font-size: 1.6rem;
-    font-weight: 800;
-    color: var(--primary-green);
-    margin: 8px 0;
-}
-.card-meta {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.8rem;
-    color: var(--text-muted);
-}
-.card-actions {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 12px;
-    gap: 0.5rem;
-}
-.fav-btn, .view-btn {
-    background: rgba(0,0,0,0.5);
-    border: none;
-    padding: 8px 12px;
-    border-radius: 40px;
-    cursor: pointer;
-    color: white;
-}
-.fav-btn:hover { background: #ff5e7e; }
-.view-btn:hover { background: var(--primary-blue); }
 
+/* Адаптивность */
 @media (max-width: 767px) {
     .main-container { padding: 1rem; }
     .profile-grid { flex-direction: column; }
@@ -167,145 +131,4 @@
     .avatar { width: 90px; height: 90px; font-size: 2.2rem; }
     .profile-name { font-size: 1.2rem; }
     .info-card { padding: 1rem; }
-}
-
-/* ========== АНИМАЦИИ ПРОФИЛЯ ========== */
-
-/* Аватар – плавное вращение при наведении */
-.avatar {
-    transition: transform 0.3s ease;
-}
-.avatar:hover {
-    transform: rotate(5deg) scale(1.05);
-}
-.avatar i {
-    transition: transform 0.2s;
-}
-.avatar:hover i {
-    transform: scale(1.1);
-}
-
-/* Карточки избранного (те же анимации, что и на главной) */
-.favorites-section .product-card {
-    opacity: 0;
-    transform: translateY(20px);
-    animation: cardFadeUp 0.4s forwards;
-}
-@keyframes cardFadeUp {
-    to { opacity: 1; transform: translateY(0); }
-}
-.favorites-section .product-card:nth-child(1) { animation-delay: 0.03s; }
-.favorites-section .product-card:nth-child(2) { animation-delay: 0.07s; }
-.favorites-section .product-card:nth-child(3) { animation-delay: 0.11s; }
-
-.favorites-section .product-card:hover {
-    transform: translateY(-6px);
-    transition: 0.2s;
-}
-
-/* Кнопки в карточках избранного */
-.remove-fav {
-    transition: all 0.2s;
-}
-.remove-fav:hover {
-    background: #ff5e7e;
-    transform: scale(1.02);
-}
-
-/* Плавное появление секции избранного */
-.favorites-section {
-    animation: slideUp 0.5s ease-out;
-}
-@keyframes slideUp {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Анимация для строк активности при загрузке */
-.info-row {
-    transition: background 0.2s;
-}
-.info-row:hover {
-    background: rgba(0, 230, 118, 0.05);
-    border-radius: 12px;
-    padding-left: 0.5rem;
-}
-/* Анимация для сообщения "Товары не найдены" */
-.products-grid > div:only-child {
-    animation: emptyStatePop 0.4s ease;
-}
-@keyframes emptyStatePop {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-}
-.filters-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.2rem;
-    justify-content: center;
-    margin: 1.5rem 0;
-}
-
-.filter-card {
-    background: rgba(12, 20, 30, 0.7);
-    border-radius: 24px;
-    padding: 0.9rem 1.2rem;
-    min-width: 170px;
-    backdrop-filter: blur(4px);
-    border: 1px solid rgba(45,122,255,0.2);
-    position: relative;
-}
-
-.custom-select {
-    background: #0c121c;
-    border: 1px solid #2a3a4a;
-    border-radius: 40px;
-    padding: 0.5rem 1rem;
-    color: white;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.custom-select-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    background: #111a24;
-    border-radius: 20px;
-    padding: 0.8rem;
-    min-width: 200px;
-    z-index: 301;
-    display: none;
-    border: 1px solid var(--primary-blue);
-    margin-top: 8px;
-    backdrop-filter: blur(12px);
-}
-
-.filter-card.open .custom-select-dropdown {
-    display: block;
-}
-
-.price-range input {
-    width: 80px;
-    background: #0c121c;
-    border: 1px solid #2a3a4a;
-    border-radius: 40px;
-    padding: 0.5rem;
-    color: white;
-}
-
-.sort-row {
-    display: flex;
-    justify-content: center;
-    margin: 1rem 0 2rem;
-}
-
-.sort-select {
-    background: #0c121c;
-    border: 1px solid var(--primary-blue);
-    border-radius: 40px;
-    padding: 0.6rem 1.2rem;
-    color: white;
 }

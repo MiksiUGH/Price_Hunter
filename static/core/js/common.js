@@ -32,6 +32,8 @@ function initFooterButtons() {
 document.addEventListener('DOMContentLoaded', () => {
     initBurgerMenu();
     initFooterButtons();
+    bindFavoriteButtons();
+    loadAndApplyTheme();
 });
 
 // ----- Модальное окно для 401 (неавторизован) -----
@@ -132,4 +134,34 @@ function bindFavoriteButtons(container = document) {
         btn.setAttribute('data-fav-bound', 'true');
         btn.addEventListener('click', handleFavoriteClick);
     });
+}
+
+// ----- Управление темой (светлая/тёмная) -----
+function applyTheme(theme) {
+    if (theme === 'light') {
+        document.documentElement.classList.add('light-theme');
+    } else {
+        document.documentElement.classList.remove('light-theme');
+    }
+}
+
+async function loadAndApplyTheme() {
+    // Проверяем кэш localStorage
+    const cachedTheme = localStorage.getItem('user_theme');
+    if (cachedTheme) applyTheme(cachedTheme);
+
+    try {
+        const response = await fetch('/hunter/settings/');
+        if (response.ok) {
+            const settings = await response.json();
+            const theme = settings.theme || 'dark';
+            applyTheme(theme);
+            localStorage.setItem('user_theme', theme);
+        } else {
+            applyTheme('dark');
+        }
+    } catch (error) {
+        console.warn('Не удалось загрузить тему, используется тёмная');
+        applyTheme('dark');
+    }
 }

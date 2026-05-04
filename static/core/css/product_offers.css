@@ -1,8 +1,8 @@
 /* ============================================
    PRODUCT_OFFERS.CSS – стили страницы предложений
+   (только специфичные, общие компоненты в common.css)
    ============================================ */
 
-/* Шапка продукта */
 .product-header {
     margin-bottom: 2.5rem;
     text-align: center;
@@ -44,29 +44,24 @@
     color: var(--primary-green);
 }
 
-/* Фильтры – уже есть в main.css, но сохраним отступы */
+/* Переопределение отступов */
 .filters-grid {
     margin-bottom: 1.5rem;
 }
-
-/* Сортировка – отступ сверху меньше */
 .sort-row {
     margin: 1rem 0 2rem;
 }
 
-/* Карточки офферов – небольшая тень при ховере (переопределяем, если нужно) */
+/* Особые стили для кнопок избранного на этой странице */
 .product-card .fav-btn,
 .product-card .remove-fav-btn {
     background: rgba(0, 0, 0, 0.5);
     border: 1px solid var(--primary-green);
-    transition: all 0.2s;
 }
-
 .product-card .fav-btn:hover,
 .product-card .remove-fav-btn:hover {
     background: var(--primary-green);
     color: #000;
-    transform: scale(1.02);
 }
 
 /* Адаптивность */

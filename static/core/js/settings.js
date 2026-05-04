@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('/hunter/settings/');
             if (!response.ok) throw new Error();
             const settings = await response.json();
+            if (typeof applyTheme === 'function') {
+                applyTheme(settings.theme || 'dark');
+            }
+            localStorage.setItem('user_theme', settings.theme || 'dark');
             if (themeSelect) themeSelect.value = settings.theme || 'dark';
             if (languageSelect) languageSelect.value = settings.language || 'ru';
             if (currencySelect) currencySelect.value = settings.currency || 'RUB';
@@ -47,6 +51,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     saveBtn.style.background = '#00c853';
                     setTimeout(() => { saveBtn.style.background = ''; }, 500);
                 }
+                if (typeof applyTheme === 'function') {
+                    applyTheme(payload.theme);
+                }
+                localStorage.setItem('user_theme', payload.theme);
             } else {
                 throw new Error();
             }

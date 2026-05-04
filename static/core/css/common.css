@@ -8,6 +8,7 @@
     box-sizing: border-box;
 }
 
+/* ---------- Тёмная тема (по умолчанию) ---------- */
 :root {
     --bg-gradient: radial-gradient(circle at 10% 20%, #0a0f1e, #03060c);
     --card-bg: rgba(18, 25, 40, 0.75);
@@ -20,6 +21,23 @@
     --input-border: #2a3748;
     --header-bg: rgba(3, 8, 18, 0.95);
     --footer-bg: #050a12;
+    --danger: #ff5e7e;
+}
+
+/* ---------- Светлая тема ---------- */
+html.light-theme {
+    --bg-gradient: radial-gradient(circle at 10% 20%, #eef2f9, #d4e0ec);
+    --card-bg: rgba(255, 255, 255, 0.92);
+    --card-border: rgba(0, 100, 80, 0.25);
+    --primary-green: #008b5f;
+    --primary-blue: #1a5bc4;
+    --text-white: #1a2a3a;
+    --text-muted: #2c4c66;
+    --input-bg: #ffffff;
+    --input-border: #b0c4de;
+    --header-bg: rgba(245, 250, 255, 0.96);
+    --footer-bg: #e2e8f0;
+    --danger: #dc3545;
 }
 
 body {
@@ -29,6 +47,7 @@ body {
     line-height: 1.5;
     padding-top: 80px;
     min-height: 100vh;
+    transition: background 0.2s, color 0.2s;
 }
 
 /* ========== ШАПКА ========== */
@@ -156,21 +175,191 @@ body {
     color: #5f7f9e;
 }
 
-/* ========== ОБЩАЯ АДАПТИВНОСТЬ (шапка, бургер, футер) ========== */
-@media (max-width: 767px) {
-    body { padding-top: 70px; }
-    .header { padding: 0.6rem 1.2rem; }
-    .logo { font-size: 1.6rem; }
-    .burger-btn { font-size: 1.6rem; }
-    .footer { margin-top: 2rem; padding: 1.5rem 1rem; }
-    .footer-content { flex-direction: column; text-align: center; }
-    .social-icons { justify-content: center; }
-    .footer-buttons { justify-content: center; }
+/* ========== ОБЩИЕ КОМПОНЕНТЫ (фильтры, карточки, сетка) ========== */
+
+/* Контейнер сетки */
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
 }
 
-/* ========== ОБЩИЕ АНИМАЦИИ ДЛЯ ВСЕХ СТРАНИЦ ========== */
+/* Карточка товара (общая) */
+.product-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(8px);
+    border-radius: 28px;
+    padding: 1.2rem;
+    border: 1px solid var(--card-border);
+    transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    opacity: 0;
+    transform: translateY(20px);
+    animation: cardFadeUp 0.4s forwards;
+}
+@keyframes cardFadeUp {
+    to { opacity: 1; transform: translateY(0); }
+}
+.product-card:hover {
+    transform: translateY(-8px) scale(1.01);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.3);
+    border-color: var(--primary-green);
+}
+.card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+.card-price {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--primary-green);
+    margin: 8px 0;
+}
+.card-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+.card-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    gap: 0.5rem;
+}
+.fav-btn, .view-btn, .remove-fav-btn {
+    background: rgba(0,0,0,0.5);
+    border: none;
+    padding: 8px 12px;
+    border-radius: 40px;
+    cursor: pointer;
+    color: white;
+    transition: all 0.2s;
+}
+.fav-btn:hover, .remove-fav-btn:hover {
+    background: var(--danger);
+    transform: scale(1.02);
+}
+.view-btn:hover {
+    background: var(--primary-blue);
+    transform: scale(1.02);
+}
 
-/* Плавное появление страницы */
+/* Фильтры (универсальные) */
+.filters-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.2rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+    position: relative;
+}
+.filter-card {
+    background: var(--card-bg);
+    border-radius: 24px;
+    padding: 0.9rem 1.2rem;
+    min-width: 170px;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(45,122,255,0.2);
+    position: relative;
+    z-index: 1;
+    max-height: 90px;
+}
+.filter-card.open { z-index: 300; }
+.filter-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--primary-green);
+    margin-bottom: 6px;
+}
+.custom-select {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 40px;
+    padding: 0.5rem 1rem;
+    color: var(--text-white);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.custom-select-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border-radius: 20px;
+    padding: 0.8rem;
+    min-width: 200px;
+    z-index: 301;
+    display: none;
+    border: 1px solid var(--primary-blue);
+    margin-top: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+.filter-card.open .custom-select-dropdown { display: block; }
+.radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0;
+    cursor: pointer;
+}
+.price-range {
+    display: flex;
+    gap: 8px;
+}
+.price-range input {
+    width: 80px;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 40px;
+    padding: 0.5rem;
+    color: var(--text-white);
+}
+.sort-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.2rem;
+    justify-content: center;
+    margin: 1rem 0 2rem;
+}
+.sort-select {
+    background: var(--input-bg);
+    border: 1px solid var(--primary-blue);
+    border-radius: 40px;
+    padding: 0.6rem 1.2rem;
+    color: var(--text-white);
+}
+
+/* Адаптивность общих компонентов */
+@media (max-width: 1199px) {
+    .filter-card { min-width: 160px; }
+}
+@media (max-width: 991px) {
+    .products-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+    .filters-grid { gap: 1rem; }
+    .filter-card { min-width: auto; flex: 1 1 180px; }
+}
+@media (max-width: 767px) {
+    .filters-grid { flex-direction: column; align-items: stretch; }
+    .filter-card { width: 100%; max-height: 100px; }
+    .products-grid { grid-template-columns: 1fr; gap: 1rem; }
+}
+@media (max-width: 575px) {
+    .filter-card { padding: 0.7rem 1rem; max-height: 95px; }
+    .price-range input { width: 70px; }
+    .custom-select-dropdown { min-width: 180px; left: 0; right: auto; }
+    .product-card { padding: 1rem; }
+    .card-price { font-size: 1.4rem; }
+    .card-actions { flex-wrap: wrap; gap: 0.5rem; }
+    .fav-btn, .view-btn, .remove-fav-btn { flex: 1; text-align: center; }
+}
+
+/* ========== ОБЩИЕ АНИМАЦИИ ========== */
 body {
     animation: fadeIn 0.4s ease-out;
 }
@@ -178,8 +367,6 @@ body {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
 }
-
-/* Анимация для всех кнопок и ссылок-кнопок */
 button, .menu-btn, .edit-btn, .save-btn, .cancel-btn, .footer-btn, .burger-btn {
     transition: all 0.25s ease-in-out;
 }
@@ -187,25 +374,12 @@ button:hover, .menu-btn:hover, .edit-btn:hover, .save-btn:hover, .cancel-btn:hov
     transform: translateY(-2px);
     box-shadow: 0 6px 14px rgba(0, 230, 118, 0.2);
 }
-button:active, .menu-btn:active, .edit-btn:active {
-    transform: translateY(1px);
-}
-
-/* Бургер-меню – плавное появление иконки */
-.burger-btn {
-    transition: transform 0.2s, color 0.2s;
-}
 .burger-btn:hover {
     transform: rotate(90deg);
     color: var(--primary-blue);
 }
-
-/* Плавное открытие сайдбара */
 .side-menu {
     transition: right 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-}
-.side-menu.open {
-    right: 0;
 }
 .side-menu .menu-btn {
     transform: translateX(20px);
@@ -213,23 +387,38 @@ button:active, .menu-btn:active, .edit-btn:active {
     animation: slideInMenu 0.3s forwards;
 }
 @keyframes slideInMenu {
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
+    to { transform: translateX(0); opacity: 1; }
 }
-/* Задержки для пунктов меню */
 .side-menu .menu-btn:nth-child(2) { animation-delay: 0.05s; }
 .side-menu .menu-btn:nth-child(3) { animation-delay: 0.1s; }
 .side-menu .menu-btn:nth-child(4) { animation-delay: 0.15s; }
 .side-menu .menu-btn:nth-child(5) { animation-delay: 0.2s; }
 
-/* Анимация для кнопок футера */
-.footer-btn:hover {
-    background: rgba(45, 122, 255, 0.25);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 14px rgba(0, 230, 118, 0.2);
+/* Анимация появления карточек (задержки) */
+.products-grid .product-card:nth-child(1) { animation-delay: 0.02s; }
+.products-grid .product-card:nth-child(2) { animation-delay: 0.05s; }
+.products-grid .product-card:nth-child(3) { animation-delay: 0.08s; }
+.products-grid .product-card:nth-child(4) { animation-delay: 0.11s; }
+.products-grid .product-card:nth-child(5) { animation-delay: 0.14s; }
+.products-grid .product-card:nth-child(6) { animation-delay: 0.17s; }
+.products-grid .product-card:nth-child(7) { animation-delay: 0.2s; }
+.products-grid .product-card:nth-child(8) { animation-delay: 0.23s; }
+
+/* Пульсация кнопок */
+.fav-btn:active, .remove-fav-btn:active {
+    animation: pulse 0.3s;
 }
-.footer-btn:active {
-    transform: translateY(1px);
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); background: var(--danger); }
+    100% { transform: scale(1); }
+}
+
+/* Пустое состояние */
+.products-grid > div:only-child {
+    animation: emptyStatePop 0.4s ease;
+}
+@keyframes emptyStatePop {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
 }
