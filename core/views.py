@@ -3,6 +3,7 @@ from urllib.parse import urlparse
 from difflib import SequenceMatcher
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, render
+from django.views import View
 
 from core.utils.parsers import OzonParser, WbParser, YandexMarketParser, AbstractParser
 from core.models import Product, Shop, Offer, Subscription
@@ -196,7 +197,12 @@ def product_offers(request: HttpRequest, slug: str) -> HttpResponse:
 
     offers: list[dict[str, Offer | bool]] = [{'offer': o, 'is_favorite': False} for o in product.offers.filter(is_active=True).select_related('shop')]
     if not offers:
-        return render(request, 'core/product_offers.html', context={})
+        return render(request, 'core/product_offers.html', context={
+            'offers': [],
+            'product': product,
+            'min_price': 0,
+            'max_price': 0,
+        })
 
     if request.user.is_authenticated:
         favorite_offers: set[int] = set(Subscription.objects.filter(user=request.user, is_active=True).values_list('offer_id', flat=True))
@@ -218,3 +224,83 @@ def product_offers(request: HttpRequest, slug: str) -> HttpResponse:
         'min_price': min_price,
         'max_price': max_price,
     })
+
+
+# Основные view-классы
+class FavoritesView(View):
+    """
+    Обрабатывает операции добавления и удаления товаров из избранного (подписки).
+    
+    POST /favorites/<offer_id>/ – добавляет предложение в избранное.
+    DELETE /favorites/<offer_id>/ – удаляет предложение из избранного.
+    """
+    def post(self, request: HttpRequest, offer_id: int) -> HttpResponse:
+        """
+        Добавляет указанное предложение в избранное текущего пользователя.
+        
+        Если подписка ещё не существует – создаётся новая с is_active=True.
+        Если подписка уже есть, но неактивна – активируется.
+        Поля target_price и last_notified_price остаются None.
+
+        :param request: Http-запрос
+        :type request: HttpRequest
+        :param offer_id: ID предложения
+        :type offer_id: int
+        :return: HTTP-ответ со статусом 200 (успех), 401 (не авторизован) или 500 (ошибка)
+        :rtype: HttpResponse
+        """
+        try:
+            if not request.user.is_authenticated:
+                return HttpResponse(status=401)
+
+            offer = get_object_or_404(Offer, id=offer_id)
+            subscription, created = Subscription.objects.get_or_create(
+                user=request.user,
+                offer=offer,
+                defaults={
+                    'target_price': None,
+                    'last_notified_price': None,
+                    'is_active': True,
+                }
+            )
+
+            if not created:
+                if not subscription.is_active:
+                    subscription.is_active = True
+                    subscription.save()
+
+            return HttpResponse(status=200)
+
+        except Exception:
+            return HttpResponse(status=500)
+
+
+    def delete(self, request: HttpRequest, offer_id: int) -> HttpResponse:
+        """
+        Удаляет указанное предложение из избранного текущего пользователя.
+        
+        Находит активную подписку и деактивирует её (is_active=False).
+        Если подписка не найдена, возвращает 404.
+
+        :param request: Http-запрос
+        :type request: HttpRequest
+        :param offer_id: ID предложения
+        :type offer_id: int
+        :return: HTTP-ответ со статусом 200 (успех), 401 (не авторизован), 404 (не найдено) или 500 (ошибка)
+        :rtype: HttpResponse
+        """
+        try:
+            if not request.user.is_authenticated:
+                return HttpResponse(status=401)
+
+            del_sub: Subscription = Subscription.objects.filter(user=request.user, offer_id=offer_id, is_active=True).first()
+            if not del_sub:
+                return HttpResponse(status=404)
+
+            del_sub.is_active = False
+            del_sub.save()
+
+            return HttpResponse(status=200)
+
+        except Exception:
+            return HttpResponse(status=500)
