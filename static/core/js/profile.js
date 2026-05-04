@@ -113,4 +113,159 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', profileRemoveHandler);
         btn._profileRemoveHandler = profileRemoveHandler;
     });
+
+    // ----- Клиентские фильтры и сортировка для избранных товаров -----
+    function initProfileFilters() {
+        const container = document.getElementById('favoritesContainer');
+        if (!container) return;
+
+        // Сохраняем исходные карточки
+        let allCards = Array.from(container.querySelectorAll('.product-card'));
+        if (allCards.length === 0) return;
+
+        // Извлекаем данные из каждой карточки
+        let cardsData = allCards.map(card => {
+            // Цена
+            const priceElem = card.querySelector('.card-price');
+            let price = 0;
+            if (priceElem) {
+                const priceText = priceElem.innerText.replace(/[^\d]/g, '');
+                price = parseInt(priceText) || 0;
+            }
+            // Магазин
+            const shopElem = card.querySelector('.card-meta:last-child span:last-child');
+            let shop = shopElem ? shopElem.innerText.trim() : '';
+            // Доставка
+            const deliveryElem = card.querySelector('.card-meta:first-child span:last-child');
+            let deliveryDays = 9999;
+            if (deliveryElem) {
+                const text = deliveryElem.innerText;
+                if (text.includes('Завтра')) deliveryDays = 1;
+                else if (text.includes('Послезавтра')) deliveryDays = 2;
+                else {
+                    const match = text.match(/(\d+)\s*дн/);
+                    if (match) deliveryDays = parseInt(match[1]);
+                }
+            }
+            return { card, price, shop, deliveryDays };
+        });
+
+        // Элементы фильтров
+        const priceFrom = document.getElementById('priceFromProfile');
+        const priceTo = document.getElementById('priceToProfile');
+        const marketCheckboxes = document.querySelectorAll('#marketDropdownProfile input[type="checkbox"]');
+        const allCheck = document.getElementById('marketAllProfile');
+        const deliveryRadios = document.querySelectorAll('input[name="deliveryRadioProfile"]');
+        const sortSelect = document.getElementById('sortPriceProfile');
+
+        function filterAndSort() {
+            let minPrice = priceFrom ? parseInt(priceFrom.value) || 0 : 0;
+            let maxPrice = priceTo ? parseInt(priceTo.value) || Infinity : Infinity;
+            if (priceTo && priceTo.value === '') maxPrice = Infinity;
+
+            // Выбранные магазины
+            let selectedShops = [];
+            marketCheckboxes.forEach(cb => {
+                if (cb.checked && cb.value !== 'all') selectedShops.push(cb.value);
+            });
+            const isAllShops = (allCheck && allCheck.checked) || selectedShops.length === 0;
+
+            // Доставка
+            let maxDelivery = 9999;
+            deliveryRadios.forEach(r => {
+                if (r.checked) maxDelivery = parseInt(r.value);
+            });
+
+            // Сортировка
+            const sortType = sortSelect ? sortSelect.value : 'none';
+
+            let filtered = cardsData.filter(data => {
+                if (data.price < minPrice || data.price > maxPrice) return false;
+                if (!isAllShops && !selectedShops.includes(data.shop)) return false;
+                if (data.deliveryDays > maxDelivery) return false;
+                return true;
+            });
+
+            if (sortType === 'asc') filtered.sort((a, b) => a.price - b.price);
+            else if (sortType === 'desc') filtered.sort((a, b) => b.price - a.price);
+            // none – сохраняем исходный порядок
+
+            // Перерисовка
+            container.innerHTML = '';
+            if (filtered.length === 0) {
+                container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem;">⭐ Нет избранных товаров, соответствующих фильтрам.</div>';
+            } else {
+                filtered.forEach(data => container.appendChild(data.card));
+            }
+
+            // Заново привязать обработчики удаления (если используем profile.js)
+            document.querySelectorAll('.remove-fav-btn').forEach(btn => {
+                btn.removeEventListener('click', profileRemoveHandler);
+                function profileRemoveHandler(e) {
+                    e.preventDefault();
+                    removeFromFavorites(btn);
+                }
+                btn.addEventListener('click', profileRemoveHandler);
+                btn._profileRemoveHandler = profileRemoveHandler;
+            });
+        }
+
+        // Навешиваем события
+        if (priceFrom) priceFrom.addEventListener('input', filterAndSort);
+        if (priceTo) priceTo.addEventListener('input', filterAndSort);
+        marketCheckboxes.forEach(cb => cb.addEventListener('change', filterAndSort));
+        deliveryRadios.forEach(r => r.addEventListener('change', filterAndSort));
+        if (sortSelect) sortSelect.addEventListener('change', filterAndSort);
+
+        // Инициализация дропдауна для маркетплейсов (как на главной)
+        const marketContainer = document.getElementById('marketMultiSelectProfile');
+        const marketTrigger = marketContainer?.querySelector('.multi-select-trigger');
+        if (marketContainer && marketTrigger) {
+            marketTrigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.querySelectorAll('.filter-card.open').forEach(card => {
+                    if (card !== marketContainer) card.classList.remove('open');
+                });
+                marketContainer.classList.toggle('open');
+            });
+            document.addEventListener('click', (e) => {
+                if (!marketContainer.contains(e.target)) marketContainer.classList.remove('open');
+            });
+        }
+
+        const deliveryContainer = document.getElementById('deliverySelectProfile');
+        const deliveryTrigger = deliveryContainer?.querySelector('.delivery-trigger');
+        if (deliveryContainer && deliveryTrigger) {
+            deliveryTrigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.querySelectorAll('.filter-card.open').forEach(card => {
+                    if (card !== deliveryContainer) card.classList.remove('open');
+                });
+                deliveryContainer.classList.toggle('open');
+            });
+            document.addEventListener('click', (e) => {
+                if (!deliveryContainer.contains(e.target)) deliveryContainer.classList.remove('open');
+            });
+        }
+
+        // Обновление текста выбранной доставки
+        function updateDeliveryLabel() {
+            const selectedSpan = document.getElementById('deliverySelectedLabelProfile');
+            for (let r of deliveryRadios) {
+                if (r.checked) {
+                    selectedSpan.innerText = r.parentElement.innerText.trim();
+                    break;
+                }
+            }
+        }
+        deliveryRadios.forEach(r => r.addEventListener('change', updateDeliveryLabel));
+        updateDeliveryLabel();
+
+        filterAndSort(); // применить начальные фильтры (сортировка по умолчанию)
+    }
+
+    // Запускаем после загрузки DOM
+    if (document.getElementById('favoritesContainer')) {
+        initProfileFilters();
+    }
 });

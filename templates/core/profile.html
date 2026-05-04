@@ -15,7 +15,7 @@
                 </div>
                 <div class="profile-name">{{ user.get_full_name|default:user.username }}</div>
                 <div class="profile-email">{{ user.email }}</div>
-                <a href="{% url 'profile' %}" class="edit-btn" style="display: inline-block; text-align: center; text-decoration: none;"><i class="fas fa-pen"></i> Редактировать профиль</a>
+                <a href="{% url 'edit_profile' %}" class="edit-btn" style="display: inline-block; text-align: center; text-decoration: none;"><i class="fas fa-pen"></i> Редактировать профиль</a>
                 <button class="edit-btn logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Выйти из аккаунта</button>
             </div>
             <div class="profile-content">
@@ -31,6 +31,50 @@
                     <a href="{% url 'settings' %}" class="edit-btn" style="margin-top: 1rem; width: auto; padding: 0.4rem 1rem; display: inline-block; text-decoration: none;"><i class="fas fa-cog"></i> Управление</a>
                 </div>
             </div>
+        </div>
+
+        <!-- Фильтры для избранных товаров -->
+        <div class="filters-grid" id="profileFilters">
+            <div class="filter-card" id="marketMultiSelectProfile">
+                <div class="filter-label">🏪 Маркетплейсы</div>
+                <div class="custom-select multi-select-trigger"><span>Выбрать</span> <i class="fas fa-chevron-down"></i></div>
+                <div class="custom-select-dropdown multi-dropdown" id="marketDropdownProfile">
+                    <label><input type="checkbox" value="all" id="marketAllProfile" checked> Все</label>
+                    {% for shop_name in unique_shops %}
+                        <label><input type="checkbox" value="{{ shop_name }}"> {{ shop_name }}</label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="filter-card">
+                <div class="filter-label">💰 Цена (₽)</div>
+                <div class="price-range">
+                    <input type="number" id="priceFromProfile" placeholder="От" value="0">
+                    <input type="number" id="priceToProfile" placeholder="До" value="999999">
+                </div>
+            </div>
+
+            <div class="filter-card" id="deliverySelectProfile">
+                <div class="filter-label">🚚 Срок доставки</div>
+                <div class="custom-select delivery-trigger"><span id="deliverySelectedLabelProfile">Любой</span> <i class="fas fa-chevron-down"></i></div>
+                <div class="custom-select-dropdown delivery-dropdown">
+                    <div class="radio-group" id="deliveryRadioGroupProfile">
+                        <label><input type="radio" name="deliveryRadioProfile" value="2"> до послезавтра</label>
+                        <label><input type="radio" name="deliveryRadioProfile" value="3"> до 3 дней</label>
+                        <label><input type="radio" name="deliveryRadioProfile" value="5"> до 5 дней</label>
+                        <label><input type="radio" name="deliveryRadioProfile" value="7"> до 7 дней</label>
+                        <label><input type="radio" name="deliveryRadioProfile" value="9999" checked> любой</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sort-row">
+            <select id="sortPriceProfile" class="sort-select">
+                <option value="none">💰 Цена: без разницы</option>
+                <option value="asc">💰 Цена: по возрастанию</option>
+                <option value="desc">💰 Цена: по убыванию</option>
+            </select>
         </div>
 
         <!-- Избранные товары – отдельная секция на всю ширину под двумя колонками -->
