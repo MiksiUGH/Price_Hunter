@@ -44,7 +44,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
 
 class UserSettingAdmin(admin.ModelAdmin):
     """Настройка отображения пользовательских настроек в админке"""
-    list_display = ['user', 'language', 'currency', 'check_interval', 'email_notifications']
+    list_display = ['user', 'currency', 'check_interval', 'email_notifications']
 
 
 admin.site.register(Shop, ShopAdmin)

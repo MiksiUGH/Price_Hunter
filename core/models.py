@@ -149,14 +149,9 @@ class UserSetting(models.Model):
         choices=[('dark','Тёмная'),('light','Светлая')],
         default='dark'
     )
-    language = models.CharField(
-        max_length=2,
-        choices=[('ru','Русский'),('en','English')],
-        default='ru'
-    )
     currency = models.CharField(
-        max_length=3,
-        choices=[('RUB','Рубль'),('USD','Доллар'),('EUR','Евро')],
+        max_length=4,
+        choices=[('RUB','Рубль'),('USD','Доллар'),('EUR','Евро'), ('KZT ', 'Тенге')],
         default='RUB'
     )
     check_interval = models.PositiveSmallIntegerField(
