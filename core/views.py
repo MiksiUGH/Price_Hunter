@@ -1,15 +1,15 @@
 """Файл со всеми вьюхами приложения"""
 from urllib.parse import urlparse
 from difflib import SequenceMatcher
+from json import loads
 
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import View
 from django.db.models.query import QuerySet
-from django.contrib.auth.models import User
 
 from core.utils.parsers import OzonParser, WbParser, YandexMarketParser, AbstractParser
-from core.models import Product, Shop, Offer, Subscription
+from core.models import Product, Shop, Offer, Subscription, UserSetting
 from core.utils.product_utils import save_parsed_offer
 from core.utils.string_utils import normalize_name
 from core.forms import EditProfileForm
@@ -20,6 +20,12 @@ PARSERS_BY_SLUG: dict[str, AbstractParser] = {
     'wb': WbParser,
     'ozon': OzonParser,
     'yandex': YandexMarketParser,
+}
+USER_SETTINGS_VALUES: dict[str, set[str | int | bool]] = {
+    'theme': ('dark', 'light'),
+    'cur': ('RUB', 'USD', 'EUR', 'KZT'),
+    'inter': (24, 48, 72, 96),
+    'email': (True, False),
 }
 
 
@@ -382,6 +388,71 @@ class ProfileView(View):
             context['unique_shops'] = unique_shops
 
             return render(request, 'core/profile.html', context=context)
+
+        except Exception:
+            return HttpResponse(status=500)
+
+
+class SettingsView(View):
+    """"""
+    def get(self, request: HttpRequest) -> HttpResponse:
+        """
+        
+
+        :param request: _description_
+        :type request: HttpRequest
+        :return: _description_
+        :rtype: HttpResponse
+        """
+        try:
+            if not request.user.is_authenticated:
+                return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+            settings, _ = UserSetting.objects.get_or_create(user=request.user)
+            json_settings: dict[str, str | bool | int] = {
+                'theme': settings.theme,
+                'currency': settings.currency,
+                'check_interval': settings.check_interval,
+                'email_notifications': settings.email_notifications,
+            }
+
+            return JsonResponse(json_settings, status=200)
+
+        except Exception:
+            return HttpResponse(status=500)
+
+    def put(self, request: HttpRequest) -> HttpResponse:
+        """
+        
+
+        :param request: _description_
+        :type request: HttpRequest
+        :return: _description_
+        :rtype: HttpResponse
+        """
+        try:
+            if not request.user.is_authenticated:
+                return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+            new_settings: dict[str, str | bool | int] = loads(request.body)
+            settings, _ = UserSetting.objects.get_or_create(user=request.user)
+
+            if 'theme' in new_settings and new_settings['theme'] in USER_SETTINGS_VALUES['theme']:
+                settings.theme = new_settings['theme']
+            if 'currency' in new_settings and new_settings['currency'] in USER_SETTINGS_VALUES['cur']:
+                settings.currency = new_settings['currency']
+            if 'check_interval' in new_settings:
+                try:
+                    interval = int(new_settings['check_interval'])
+                    if interval in USER_SETTINGS_VALUES['inter']:
+                        settings.check_interval = interval
+                except ValueError:
+                    pass
+            if 'email_notifications' in new_settings and new_settings['email_notifications'] in USER_SETTINGS_VALUES['email']:
+                settings.email_notifications = new_settings['email_notifications']
+
+            settings.save()
+            return HttpResponse(status=200)
 
         except Exception:
             return HttpResponse(status=500)

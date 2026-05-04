@@ -151,7 +151,7 @@ class UserSetting(models.Model):
     )
     currency = models.CharField(
         max_length=4,
-        choices=[('RUB','Рубль'),('USD','Доллар'),('EUR','Евро'), ('KZT ', 'Тенге')],
+        choices=[('RUB','Рубль'),('USD','Доллар'),('EUR','Евро'), ('KZT', 'Тенге')],
         default='RUB'
     )
     check_interval = models.PositiveSmallIntegerField(
