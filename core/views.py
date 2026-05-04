@@ -1,14 +1,18 @@
 """Файл со всеми вьюхами приложения"""
 from urllib.parse import urlparse
 from difflib import SequenceMatcher
+
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import get_object_or_404, render
-from django.views import View
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.generic import View
+from django.db.models.query import QuerySet
+from django.contrib.auth.models import User
 
 from core.utils.parsers import OzonParser, WbParser, YandexMarketParser, AbstractParser
 from core.models import Product, Shop, Offer, Subscription
 from core.utils.product_utils import save_parsed_offer
 from core.utils.string_utils import normalize_name
+from core.forms import EditProfileForm
 
 
 CACHE_PRODUCTS_THRESHOLD: int = 8
@@ -104,7 +108,7 @@ def query_search(request: HttpRequest) -> HttpResponse:
         if not query:
             return render(request, 'core/partials/search_results.html', {'products': []})
 
-        all_products = Product.objects.all()
+        all_products: QuerySet[Product] = Product.objects.all()
         best_matches: list[dict[str, Product | int | set[str]]] = []
         for p in all_products:
             if check_name_matches(query, p.normalized_name):
@@ -157,7 +161,7 @@ def url_search(request: HttpRequest) -> HttpResponse:
     :rtype: HttpResponse
     """
     try:
-        query_url = request.GET.get('url', '').strip()
+        query_url: str = request.GET.get('url', '').strip()
         if not query_url:
             return render(request, 'includes/core/product_big_card.html', {})
 
@@ -165,7 +169,7 @@ def url_search(request: HttpRequest) -> HttpResponse:
         if not slug:
             return render(request, 'includes/core/product_big_card.html', {})
 
-        parsed = parser_class.search_by_url(query_url)
+        parsed: dict[str, str | bool | float] = parser_class.search_by_url(query_url)
         if not parsed or 'error' in parsed:
             return render(request, 'includes/core/product_big_card.html', {})
 
@@ -173,7 +177,7 @@ def url_search(request: HttpRequest) -> HttpResponse:
             slug=slug,
             defaults={'name': parsed.get('marketplace', slug.capitalize()), 'search_url_template': ''}
         )
-        offer = save_parsed_offer(parsed, shop)
+        offer: Offer = save_parsed_offer(parsed, shop)
         return render(request, 'includes/core/product_big_card.html', {'offer': offer})
 
     except Exception:
@@ -224,6 +228,41 @@ def product_offers(request: HttpRequest, slug: str) -> HttpResponse:
         'min_price': min_price,
         'max_price': max_price,
     })
+
+
+def edit_profile(request: HttpRequest) -> HttpResponse:
+    """
+    Редактирование профиля пользователя (имя, фамилия, email).
+    
+    GET – отображает форму с текущими данными пользователя.
+    POST – обновляет поля first_name, last_name, email (с валидацией) и сохраняет.
+    
+    При успешном сохранении перенаправляет на страницу профиля.
+    При ошибках валидации возвращает форму с сообщениями об ошибках.
+
+    :param request: HTTP-запрос
+    :type request: HttpRequest
+    :return: HTML-форма (GET) или редирект/форма с ошибками (POST)
+    :rtype: HttpResponse
+    """
+    try:
+        if not request.user.is_authenticated:
+            return redirect('login')
+
+        if request.method == 'POST':
+            form = EditProfileForm(request.POST, instance=request.user)
+            if form.is_valid():
+                form.save()
+                return redirect('profile')
+
+            return render(request, 'core/edit_profile.html', context={'form': form})
+
+        else:
+            form = EditProfileForm(instance=request.user)
+            return render(request, 'core/edit_profile.html', context={'form': form})
+
+    except Exception:
+        return HttpResponse(status=500)
 
 
 # Основные view-классы
@@ -301,6 +340,48 @@ class FavoritesView(View):
             del_sub.save()
 
             return HttpResponse(status=200)
+
+        except Exception:
+            return HttpResponse(status=500)
+
+
+class ProfileView(View):
+    """
+    Обрабатывает операции получения профиля пользователя.
+
+    GET /profile/ – рендерит шаблон профиля и возвращает пользователю.
+    """
+    def get(self, request: HttpRequest) -> HttpResponse:
+        """
+        Отображает страницу профиля пользователя с его избранными товарами.
+    
+        Если пользователь не авторизован – перенаправляет на страницу входа.
+        Извлекает все активные подписки (избранные) текущего пользователя,
+        выбирает связанные с ними предложения (Offer) и передаёт их в шаблон.
+
+        :param request: HTTP-запрос
+        :type request: HttpRequest
+        :return: HTTP-ответ с рендером шаблона core/profile.html или редирект на login
+        :rtype: HttpResponse
+        """
+        try:
+            if not request.user.is_authenticated:
+                return redirect('login')
+
+            favorite_items: QuerySet[Offer] = Offer.objects.filter(
+                subs__user=request.user,
+                subs__is_active=True
+            ).select_related('product', 'shop').order_by('price')
+
+            context = {
+                'favorite_items': favorite_items,
+                'user': request.user,
+            }
+
+            unique_shops = list(set(favorite_items.values_list('shop__name', flat=True)))
+            context['unique_shops'] = unique_shops
+
+            return render(request, 'core/profile.html', context=context)
 
         except Exception:
             return HttpResponse(status=500)
