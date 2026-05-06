@@ -257,4 +257,138 @@ document.addEventListener('DOMContentLoaded', () => {
         // Выполняем фильтрацию (приведёт к сортировке по умолчанию, если нужно)
         window.filterAndSort();
     }
+
+    // ----- Удаление аккаунта с модальным подтверждением -----
+    function createDeleteConfirmModal() {
+        if (document.getElementById('deleteConfirmModal')) return;
+
+        const modalHTML = `
+            <div id="deleteConfirmModal" class="modal-overlay" style="display: none;">
+                <div class="modal-content delete-modal">
+                    <div class="modal-icon">⚠️</div>
+                    <h3>Удаление аккаунта</h3>
+                    <p>Вы действительно хотите удалить свой аккаунт?<br>Это действие <strong>необратимо</strong> – все ваши данные будут потеряны.</p>
+                    <div class="modal-buttons">
+                        <button id="confirmDeleteBtn" class="save-btn danger-btn">Да, удалить</button>
+                        <button id="cancelDeleteBtn" class="cancel-btn">Отмена</button>
+                    </div>
+                </div>
+            </div>
+            <style>
+                .modal-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.7);
+                    backdrop-filter: blur(5px);
+                    z-index: 10001;
+                    justify-content: center;
+                    align-items: center;
+                }
+                .modal-content {
+                    background: var(--card-bg);
+                    border-radius: 32px;
+                    padding: 2rem;
+                    text-align: center;
+                    max-width: 400px;
+                    width: 90%;
+                    border: 1px solid var(--danger);
+                    animation: modalPop 0.3s ease;
+                }
+                .delete-modal .modal-icon {
+                    font-size: 3rem;
+                    margin-bottom: 1rem;
+                }
+                .modal-buttons {
+                    display: flex;
+                    gap: 1rem;
+                    justify-content: center;
+                    margin-top: 1.5rem;
+                }
+                .danger-btn {
+                    background: var(--danger);
+                    border: none;
+                    color: white;
+                    padding: 0.6rem 1.2rem;
+                    border-radius: 60px;
+                    cursor: pointer;
+                }
+                .cancel-btn {
+                    background: rgba(255,255,255,0.2);
+                    border: 1px solid var(--text-muted);
+                    color: var(--text-white);
+                    padding: 0.6rem 1.2rem;
+                    border-radius: 60px;
+                    cursor: pointer;
+                }
+                @keyframes modalPop {
+                    from { transform: scale(0.9); opacity: 0; }
+                    to { transform: scale(1); opacity: 1; }
+                }
+            </style>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+        const modal = document.getElementById('deleteConfirmModal');
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
+        const cancelBtn = document.getElementById('cancelDeleteBtn');
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        confirmBtn.addEventListener('click', async () => {
+            closeModal();
+            // Показываем индикатор загрузки на кнопке (опционально)
+            const deleteBtn = document.getElementById('deleteAccountBtn');
+            const originalText = deleteBtn.innerHTML;
+            deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Удаление...';
+            deleteBtn.disabled = true;
+
+            try {
+                const response = await fetch('/hunter/delete_user/', {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        window.location.href = '/hunter/';
+                    } else {
+                        alert('Ошибка при удалении аккаунта');
+                    }
+                } else if (response.status === 401) {
+                    alert('Вы не авторизованы');
+                } else {
+                    alert('Ошибка сервера. Попробуйте позже.');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Не удалось выполнить запрос');
+            } finally {
+                deleteBtn.innerHTML = originalText;
+                deleteBtn.disabled = false;
+            }
+        });
+
+        cancelBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+    }
+
+    // Обработчик кнопки удаления аккаунта
+    const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+    if (deleteAccountBtn) {
+        deleteAccountBtn.addEventListener('click', () => {
+            createDeleteConfirmModal();
+            const modal = document.getElementById('deleteConfirmModal');
+            if (modal) modal.style.display = 'flex';
+        });
+    }
 });

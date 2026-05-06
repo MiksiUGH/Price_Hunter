@@ -119,6 +119,17 @@
     border-left: 3px solid var(--primary-green);
     padding-left: 1rem;
 }
+.delete-account-btn {
+    background: rgba(220, 53, 69, 0.2);
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    margin-top: 1rem;
+}
+.delete-account-btn:hover {
+    background: var(--danger);
+    color: white;
+    transform: translateY(-2px);
+}
 
 /* Адаптивность */
 @media (max-width: 767px) {

@@ -3,8 +3,9 @@ from django.urls import path
 from django.contrib.auth.views import LogoutView, LoginView
 
 from core.forms import CustomLoginForm, CustomRegistrationForm
-from .views import (query_search, url_search, product_offers, edit_profile, register,
-                    FavoritesView, ProfileView, SettingsView, CustomPasswordChangeView)
+from .views import (query_search, url_search, product_offers,
+                    edit_profile, register, index, instruction, delete_user,
+                    FavoritesView, ProfileView, SettingsView, CustomPasswordChangeView,)
 
 
 urlpatterns = [
@@ -28,9 +29,7 @@ urlpatterns = [
     path('logout', LogoutView.as_view(next_page='hunter'), name='logout'),
     path('register', register, name='register'),
     path('change-password/', CustomPasswordChangeView.as_view(), name='edit_password'),
-]
-
-"""
     path('', index, name='hunter'),
-    path('instruction', instruction, name='instruction')
-    path('delete_user', delete_user, name='delete_user')"""
+    path('instruction', instruction, name='instruction'),
+    path('delete_user', delete_user, name='delete_user'),
+]

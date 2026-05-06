@@ -17,6 +17,9 @@
                 <div class="profile-email">{{ user.email }}</div>
                 <a href="{% url 'edit_profile' %}" class="edit-btn" style="display: inline-block; text-align: center; text-decoration: none;"><i class="fas fa-pen"></i> Редактировать профиль</a>
                 <button class="edit-btn logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Выйти из аккаунта</button>
+                <button class="edit-btn delete-account-btn" id="deleteAccountBtn">
+                    <i class="fas fa-trash-alt"></i> Удалить аккаунт
+                </button>
             </div>
             <div class="profile-content">
                 <div class="info-card">
@@ -27,7 +30,7 @@
                 </div>
                 <div class="info-card">
                     <div class="info-title">🔔 Настройки уведомлений</div>
-                    <div class="info-row"><span class="info-label">Email-рассылка:</span><span class="info-value">Включена</span></div>
+                    <div class="info-row"><span class="info-label">Email-рассылка:</span><span class="info-value">{% if email_checked %}Включена{% else %}Выключена{% endif %}</span></div>
                     <a href="{% url 'settings' %}" class="edit-btn" style="margin-top: 1rem; width: auto; padding: 0.4rem 1rem; display: inline-block; text-decoration: none;"><i class="fas fa-cog"></i> Управление</a>
                 </div>
             </div>

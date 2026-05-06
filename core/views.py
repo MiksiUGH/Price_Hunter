@@ -7,15 +7,17 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import View
 from django.db.models.query import QuerySet
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.urls import reverse_lazy
 from django.contrib.auth.views import PasswordChangeView
+from django.views.decorators.http import require_http_methods, require_GET
 
 from core.utils.parsers import OzonParser, WbParser, YandexMarketParser, AbstractParser
 from core.models import Product, Shop, Offer, Subscription, UserSetting
 from core.utils.product_utils import save_parsed_offer
 from core.utils.string_utils import normalize_name
-from core.forms import EditProfileForm, CustomRegistrationForm, CustomLoginForm, CustomPasswordChangeForm
+from core.forms import (EditProfileForm, CustomRegistrationForm,
+                        CustomLoginForm, CustomPasswordChangeForm)
 
 
 CACHE_PRODUCTS_THRESHOLD: int = 8
@@ -97,6 +99,7 @@ def check_name_matches(name1: str, name2: str, best_ratio: float = 0.8) -> bool:
 
 
 # Основные view-функции
+@require_GET
 def query_search(request: HttpRequest) -> HttpResponse:
     """
     Поиск товаров по названию с гибридным кешированием.
@@ -156,6 +159,7 @@ def query_search(request: HttpRequest) -> HttpResponse:
         return HttpResponse(status=500)
 
 
+@require_GET
 def url_search(request: HttpRequest) -> HttpResponse:
     """
     Поиск товара по прямому URL (одиночный товар).
@@ -193,6 +197,7 @@ def url_search(request: HttpRequest) -> HttpResponse:
         return HttpResponse(status=500)
 
 
+@require_GET
 def product_offers(request: HttpRequest, slug: str) -> HttpResponse:
     """
     Отображает страницу со всеми активными предложениями (Offer) для заданного продукта.
@@ -239,6 +244,7 @@ def product_offers(request: HttpRequest, slug: str) -> HttpResponse:
     })
 
 
+@require_http_methods(['GET', 'POST'])
 def edit_profile(request: HttpRequest) -> HttpResponse:
     """
     Редактирование профиля пользователя (имя, фамилия, email).
@@ -274,6 +280,7 @@ def edit_profile(request: HttpRequest) -> HttpResponse:
         return HttpResponse(status=500)
 
 
+@require_http_methods(['GET', 'POST'])
 def register(request: HttpRequest) -> HttpResponse:
     """
     Регистрация нового пользователя.
@@ -304,6 +311,53 @@ def register(request: HttpRequest) -> HttpResponse:
         'register_mode': True,
     }
     return render(request, 'core/auth.html', context)
+
+
+@require_GET
+def index(request: HttpRequest) -> HttpResponse:
+    """
+    Отображает главную страницу приложения.
+
+    :param request: HTTP-запрос
+    :type request: HttpRequest
+    :return: HTTP-ответ с рендером шаблона core/index.html
+    :rtype: HttpResponse
+    """
+    return render(request, 'core/index.html')
+
+
+@require_GET
+def instruction(request: HttpRequest) -> HttpResponse:
+    """
+    Отображает страницу с инструкцией по использованию сервиса.
+
+    :param request: HTTP-запрос
+    :type request: HttpRequest
+    :return: HTTP-ответ с рендером шаблона core/instruction.html
+    :rtype: HttpResponse
+    """
+    return render(request, 'core/instruction.html')
+
+
+@require_http_methods(['DELETE'])
+def delete_user(request: HttpRequest) -> JsonResponse:
+    """
+    Удаляет учётную запись текущего пользователя.
+
+    Требует авторизации. При успешном удалении выполняет выход и возвращает json-ответ.
+
+    :param request: HTTP-запрос
+    :type request: HttpRequest
+    :return: json-ответ(статус 200) или 401 (не авторизован)
+    :rtype: JsonResponse
+    """
+    if not request.user.is_authenticated:
+        return HttpResponse(status=401)
+
+    user = request.user
+    logout(request)
+    user.delete()
+    return JsonResponse({'status': 'success'})
 
 
 # Основные view-классы
@@ -421,6 +475,7 @@ class ProfileView(View):
 
             unique_shops = list(set(favorite_items.values_list('shop__name', flat=True)))
             context['unique_shops'] = unique_shops
+            context['email_checked'] = request.user.settings.email_notifications
 
             return render(request, 'core/profile.html', context=context)
 
