@@ -9,7 +9,7 @@
 }
 .hero-instruction h1 {
     font-size: 2.5rem;
-    background: linear-gradient(125deg, #fff, var(--primary-green), var(--primary-blue));
+    background: linear-gradient(125deg, var(--text-white), var(--primary-green), var(--primary-blue));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -80,9 +80,6 @@
     .step-title { font-size: 1.2rem; }
 }
 
-/* ========== АНИМАЦИИ ИНСТРУКЦИИ ========== */
-
-/* Пошаговое появление карточек */
 .step-card {
     opacity: 0;
     transform: translateY(25px);
@@ -97,14 +94,12 @@
 .step-card:nth-child(4) { animation-delay: 0.4s; }
 .step-card:nth-child(5) { animation-delay: 0.5s; }
 
-/* Ховер на карточке инструкции */
 .step-card:hover {
     transform: translateY(-5px) scale(1.01);
     transition: all 0.2s;
     border-color: var(--primary-green);
 }
 
-/* Анимация заголовка */
 .hero-instruction h1 {
     animation: glow 1.5s ease-in-out infinite alternate;
 }
@@ -113,7 +108,6 @@
     to { text-shadow: 0 0 20px rgba(0,230,118,0.7); }
 }
 
-/* FAQ секция – плавное появление */
 .faq-section {
     animation: fadeIn 0.7s ease-out 0.6s forwards;
     opacity: 0;

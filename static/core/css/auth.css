@@ -65,7 +65,7 @@
     background: var(--input-bg);
     border: 1px solid var(--input-border);
     border-radius: 60px;
-    color: white;
+    color: var(--text-white);
     font-size: 1rem;
     outline: none;
     transition: 0.2s;
@@ -102,7 +102,6 @@
     text-decoration: none;
 }
 
-/* Адаптивность для формы */
 @media (max-width: 767px) {
     .main-container { padding: 1rem; }
     .form-card { padding: 1.5rem; }
@@ -114,9 +113,6 @@
     .submit-btn { padding: 0.7rem; }
 }
 
-/* ========== АНИМАЦИИ СТРАНИЦЫ ВХОДА/РЕГИСТРАЦИИ ========== */
-
-/* Появление карточки формы */
 .form-card {
     animation: fadeInScale 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
 }
@@ -125,7 +121,6 @@
     to { opacity: 1; transform: scale(1); }
 }
 
-/* Переключение табов – плавное исчезновение/ появление */
 .form-pane {
     transition: opacity 0.2s, transform 0.2s;
 }
@@ -136,7 +131,6 @@
     display: none;
 }
 
-/* Анимация для полей ввода при фокусе */
 .input-group input {
     transition: all 0.2s;
 }
@@ -145,7 +139,6 @@
     box-shadow: 0 4px 12px rgba(0,230,118,0.2);
 }
 
-/* Кнопка сабмита – эффект "волны" при нажатии */
 .submit-btn {
     position: relative;
     overflow: hidden;
@@ -167,7 +160,6 @@
     height: 200px;
 }
 
-/* Анимация для ссылок в футере формы */
 .auth-footer a {
     transition: all 0.2s;
 }

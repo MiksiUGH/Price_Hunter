@@ -3,7 +3,7 @@
 
 {% block title %}{{ block.super }}{% endblock title %}
 
-{% block styles %}<link href="{% static 'core/css/settings.css' %}"></link>{% endblock styles %}
+{% block styles %}<link rel="stylesheet" href="{% static 'core/css/settings.css' %}"></link>{% endblock styles %}
 
 {% block main %}
 <main class="settings-container">
@@ -14,8 +14,8 @@
             <div class="setting-label"><i class="fas fa-palette"></i> Тема оформления</div>
             <div class="setting-control">
                 <select id="themeSelect">
-                    <option value="dark" selected>Тёмная (по умолчанию)</option>
-                    <option value="light">Светлая</option>
+                    <option value="dark" {% if theme == 'dark' %}selected{% endif %}>Тёмная (по умолчанию)</option>
+                    <option value="light" {% if theme == 'light' %}selected{% endif %}>Светлая</option>
                 </select>
             </div>
         </div>
@@ -24,10 +24,10 @@
             <div class="setting-label"><i class="fas fa-money-bill-wave"></i> Валюта</div>
             <div class="setting-control">
                 <select id="currencySelect">
-                    <option value="RUB">Рубль (₽)</option>
-                    <option value="USD">Доллар ($)</option>
-                    <option value="EUR">Евро (€)</option>
-                    <option value="KZT">Тенге (₸)</option>
+                    <option value="RUB" {% if currency == 'RUB' %}selected{% endif %}>Рубль (₽)</option>
+                    <option value="USD" {% if currency == 'USD' %}selected{% endif %}>Доллар ($)</option>
+                    <option value="EUR" {% if currency == 'EUR' %}selected{% endif %}>Евро (€)</option>
+                    <option value="KZT" {% if currency == 'KZT' %}selected{% endif %}>Тенге (₸)</option>
                 </select>
             </div>
         </div>
@@ -36,13 +36,12 @@
             <div class="setting-label"><i class="fas fa-clock"></i> Проверять избранное</div>
             <div class="setting-control">
                 <select id="checkInterval">
-                    <option value="1">раз в 1 день</option>
-                    <option value="2">раз в 2 дня</option>
-                    <option value="3">раз в 3 дня</option>
-                    <option value="4">раз в 4 дня</option>
+                    <option value="24" {% if check_interval == 24 %}selected{% endif %}>раз в 1 день</option>
+                    <option value="48" {% if check_interval == 48 %}selected{% endif %}>раз в 2 дня</option>
+                    <option value="72" {% if check_interval == 72 %}selected{% endif %}>раз в 3 дня</option>
+                    <option value="96" {% if check_interval == 96 %}selected{% endif %}>раз в 4 дня</option>
                 </select>
-                <div class="note">Система будет присылать уведомления об изменении цен, появлении и отсутствиии товара и т.п.
-                </div>
+                <div class="note">Система будет присылать уведомления об изменении цен, появлении и отсутствиии товара и т.п.</div>
             </div>
         </div>
 
@@ -50,8 +49,8 @@
             <div class="setting-label"><i class="fas fa-bell"></i> Рассылка о изменении товаров в избранном</div>
             <div class="setting-control">
                 <select id="activateEmail">
-                    <option value="true">Включена</option>
-                    <option value="false" selected>Выключена</option>
+                    <option value="true" {% if email_notifications %}selected{% endif %}>Включена</option>
+                    <option value="false" {% if not email_notifications %}selected{% endif %}>Выключена</option>
                 </select>
             </div>
         </div>

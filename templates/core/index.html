@@ -1,7 +1,7 @@
 {% extends "includes/core/base.html" %}
 {% load static %}
 
-{% block styles %}<link href="{% static 'core/css/main.css' %}">{% endblock styles %}
+{% block styles %}<link rel="stylesheet" href="{% static 'core/css/main.css' %}">{% endblock styles %}
 
 {% block title %}{{ block.super }}{% endblock title %}
 
@@ -24,7 +24,6 @@
             </div>
         </div>
 
-        <!-- Контейнер для результатов поиска (динамически или сразу) -->
         <div id="productsContainer" class="products-grid">
             {% for product_item in products %}
                 {% include "includes/core/product_preview_card.html" with product=product_item.product min_price=product_item.min_price max_price=product_item.max_price offers_cnt=product_item.offers_cnt shops=product_item.shops %}
@@ -34,7 +33,7 @@
         </div>
     </div>
 
-    <!-- Режим поиска по URL (пока без изменений, но позже тоже можно адаптировать под продукты) -->
+    <!-- Режим поиска по URL -->
     <div id="searchByUrlSection" class="search-section">
         <div class="url-search-layout">
             <div class="url-left">

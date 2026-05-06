@@ -9,13 +9,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadSettings() {
         try {
-            const response = await fetch('/hunter/settings/');
+            const response = await fetch('/hunter/settings/?format=json', {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
             if (!response.ok) throw new Error();
             const settings = await response.json();
             if (typeof applyTheme === 'function') {
                 applyTheme(settings.theme || 'dark');
             }
-            localStorage.setItem('user_theme', settings.theme || 'dark');
             if (themeSelect) themeSelect.value = settings.theme || 'dark';
             if (currencySelect) currencySelect.value = settings.currency || 'RUB';
             if (checkInterval) checkInterval.value = settings.check_interval || '24';
@@ -37,9 +38,13 @@ document.addEventListener('DOMContentLoaded', () => {
             email_notifications: activateEmail?.value === 'true'
         };
         try {
-            const response = await fetch('/hunter/settings/', {
+            const response = await fetch('/hunter/settings/?format=json', {
                 method: 'PUT',
-                headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' },
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
                 body: JSON.stringify(payload)
             });
             if (response.ok) {
@@ -50,7 +55,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (typeof applyTheme === 'function') {
                     applyTheme(payload.theme);
                 }
-                localStorage.setItem('user_theme', payload.theme);
             } else {
                 throw new Error();
             }

@@ -15,7 +15,7 @@ urlpatterns = [
     path('favorites/<int:offer_id>', FavoritesView.as_view(), name='favorites'),
     path('profile', ProfileView.as_view(), name='profile'),
     path('edit_profile', edit_profile, name='edit_profile'),
-    path('settings', SettingsView.as_view(), name='settings'),
+    path('settings/', SettingsView.as_view(), name='settings'),
     path('login', LoginView.as_view(
         template_name='core/auth.html',
         authentication_form=CustomLoginForm,
@@ -29,7 +29,7 @@ urlpatterns = [
     path('logout', LogoutView.as_view(next_page='hunter'), name='logout'),
     path('register', register, name='register'),
     path('change-password/', CustomPasswordChangeView.as_view(), name='edit_password'),
-    path('', index, name='hunter'),
+    path('', index, name='hunter'),                      # главная страница
     path('instruction', instruction, name='instruction'),
     path('delete_user', delete_user, name='delete_user'),
 ]

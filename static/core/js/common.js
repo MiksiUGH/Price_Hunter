@@ -146,17 +146,12 @@ function applyTheme(theme) {
 }
 
 async function loadAndApplyTheme() {
-    // Проверяем кэш localStorage
-    const cachedTheme = localStorage.getItem('user_theme');
-    if (cachedTheme) applyTheme(cachedTheme);
-
     try {
-        const response = await fetch('/hunter/settings/');
+        const response = await fetch('/hunter/settings/?format=json');
         if (response.ok) {
             const settings = await response.json();
             const theme = settings.theme || 'dark';
             applyTheme(theme);
-            localStorage.setItem('user_theme', theme);
         } else {
             applyTheme('dark');
         }

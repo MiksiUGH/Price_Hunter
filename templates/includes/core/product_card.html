@@ -1,6 +1,6 @@
 {% load humanize %}
 <div class="product-card" data-id="{{ offer.id }}">
-    <div class="card-title">{{ offer.name }}</div>
+    <div class="card-title">{{ offer.product.name }}</div>
     <div class="card-price">{{ offer.price|floatformat:0|intcomma }} ₽</div>
     <div class="card-meta">
         <span>📦 {% if offer.in_stock %}В наличии{% else %}Нет в наличии{% endif %}</span>

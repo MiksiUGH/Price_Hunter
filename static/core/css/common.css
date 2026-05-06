@@ -422,3 +422,11 @@ button:hover, .menu-btn:hover, .edit-btn:hover, .save-btn:hover, .cancel-btn:hov
     from { opacity: 0; transform: scale(0.95); }
     to { opacity: 1; transform: scale(1); }
 }
+.big-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border-radius: 32px;
+    padding: 1.5rem;
+    border: 1px solid rgba(0, 230, 118, 0.3);
+    box-shadow: 0 20px 35px rgba(0,0,0,0.3);
+}

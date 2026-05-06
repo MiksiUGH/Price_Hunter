@@ -1,7 +1,7 @@
 {% if offer %}
-    <div class="big-card" data-id="{{ offer.id }}" style="background:#0f1825; border-radius:32px; padding:1.5rem;">
+    <div class="big-card" data-id="{{ offer.id }}">
         <h3 style="color:var(--primary-green);"><i class="fas fa-tag"></i> Найден товар</h3>
-        <div class="card-title" style="font-size:1.4rem;">{{ offer.name }}</div>
+        <div class="card-title" style="font-size:1.4rem;">{{ offer.product.name }}</div>
         <div class="card-price" style="font-size:2rem;">{{ offer.price|floatformat:0 }} ₽</div>
         <div class="card-meta">
             <span>✅ {{ offer.in_stock|yesno:"В наличии,Нет в наличии" }}</span>

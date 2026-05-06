@@ -31,7 +31,7 @@
     background: #0c121c;
     border: 1px solid #2a3a4a;
     border-radius: 60px;
-    color: white;
+    color: var(--text-white);
     font-size: 1rem;
 }
 .form-group input:focus {
@@ -54,7 +54,6 @@
     align-items: center;
     justify-content: center;
     font-size: 2rem;
-    color: #000;
 }
 .btn-group {
     display: flex;

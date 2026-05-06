@@ -475,7 +475,9 @@ class ProfileView(View):
 
             unique_shops = list(set(favorite_items.values_list('shop__name', flat=True)))
             context['unique_shops'] = unique_shops
-            context['email_checked'] = request.user.settings.email_notifications
+
+            user_settings, _ = UserSetting.objects.get_or_create(user=request.user)
+            context['email_checked'] = user_settings.email_notifications
 
             return render(request, 'core/profile.html', context=context)
 
@@ -506,15 +508,24 @@ class SettingsView(View):
             if not request.user.is_authenticated:
                 return JsonResponse({'error': 'Unauthorized'}, status=401)
 
-            settings, _ = UserSetting.objects.get_or_create(user=request.user)
-            json_settings: dict[str, str | bool | int] = {
-                'theme': settings.theme,
-                'currency': settings.currency,
-                'check_interval': settings.check_interval,
-                'email_notifications': settings.email_notifications,
-            }
-
-            return JsonResponse(json_settings, status=200)
+            if request.GET.get('format') == 'json' or request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                settings, _ = UserSetting.objects.get_or_create(user=request.user)
+                json_settings = {
+                    'theme': settings.theme,
+                    'currency': settings.currency,
+                    'check_interval': settings.check_interval,
+                    'email_notifications': settings.email_notifications,
+                }
+                return JsonResponse(json_settings, status=200)
+            else:
+                settings, _ = UserSetting.objects.get_or_create(user=request.user)
+                context = {
+                    'theme': settings.theme,
+                    'currency': settings.currency,
+                    'check_interval': settings.check_interval,
+                    'email_notifications': settings.email_notifications,
+                }
+                return render(request, 'core/settings.html', context)
 
         except Exception:
             return HttpResponse(status=500)
@@ -535,28 +546,35 @@ class SettingsView(View):
             if not request.user.is_authenticated:
                 return JsonResponse({'error': 'Unauthorized'}, status=401)
 
-            new_settings: dict[str, str | bool | int] = loads(request.body)
+            new_settings = loads(request.body)
             settings, _ = UserSetting.objects.get_or_create(user=request.user)
 
-            if 'theme' in new_settings and new_settings['theme'] in USER_SETTINGS_VALUES['theme']:
+            if 'theme' in new_settings:
                 settings.theme = new_settings['theme']
-            if 'currency' in new_settings and new_settings['currency'] in USER_SETTINGS_VALUES['cur']:
+            if 'currency' in new_settings:
                 settings.currency = new_settings['currency']
             if 'check_interval' in new_settings:
                 try:
                     interval = int(new_settings['check_interval'])
-                    if interval in USER_SETTINGS_VALUES['inter']:
+                    if interval in (24, 48, 72, 96):
                         settings.check_interval = interval
                 except ValueError:
                     pass
-            if 'email_notifications' in new_settings and new_settings['email_notifications'] in USER_SETTINGS_VALUES['email']:
-                settings.email_notifications = new_settings['email_notifications']
+            if 'email_notifications' in new_settings:
+                val = new_settings['email_notifications']
+                if isinstance(val, bool):
+                    settings.email_notifications = val
+                elif isinstance(val, str):
+                    settings.email_notifications = (val.lower() == 'true')
+                else:
+                    settings.email_notifications = bool(val)
 
             settings.save()
-            return HttpResponse(status=200)
+            return JsonResponse({'status': 'ok', 'updated': True}, status=200)
 
-        except Exception:
-            return HttpResponse(status=500)
+        except Exception as e:
+            print("PUT error:", e)
+            return JsonResponse({'error': 'Server error'}, status=500)
 
 
 class CustomPasswordChangeView(PasswordChangeView):
