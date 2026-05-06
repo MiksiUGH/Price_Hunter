@@ -276,11 +276,14 @@ def edit_profile(request: HttpRequest) -> HttpResponse:
 
 def register(request: HttpRequest) -> HttpResponse:
     """
-    
+    Регистрация нового пользователя.
 
-    :param request: _description_
+    GET – отображает форму регистрации.
+    POST – создаёт нового пользователя и автоматически выполняет вход.
+
+    :param request: HTTP-запрос
     :type request: HttpRequest
-    :return: _description_
+    :return: HTTP-ответ с рендером шаблона auth.html или редирект на профиль
     :rtype: HttpResponse
     """
     if request.user.is_authenticated:
@@ -503,34 +506,42 @@ class SettingsView(View):
 
 class CustomPasswordChangeView(PasswordChangeView):
     """
-
+    Кастомное представление для смены пароля с поддержкой AJAX-запросов.
+    При AJAX-запросе возвращает JSON с результатом валидации,
+    при обычном – стандартный HTML-рендер.
     """
     form_class = CustomPasswordChangeForm
     template_name = 'core/change_password.html'
     success_url = reverse_lazy('profile')
 
-    def form_valid(self, form):
+    def form_valid(self, form: CustomPasswordChangeForm) -> HttpResponse | JsonResponse:
         """
-        
+        Обрабатывает валидную форму смены пароля.
 
-        :param form: _description_
-        :type form: _type_
-        :return: _description_
-        :rtype: _type_
+        Для AJAX-запросов (XMLHttpRequest) сохраняет пароль и возвращает JSON.
+        Для обычных – вызывает родительский метод.
+
+        :param form: Валидная форма смены пароля
+        :type form: CustomPasswordChangeForm
+        :return: JSON-ответ при AJAX, иначе HttpResponse
+        :rtype: JsonResponse | HttpResponse
         """
         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
             form.save()
             return JsonResponse({'status': 'success'})
         return super().form_valid(form)
 
-    def form_invalid(self, form):
+    def form_invalid(self, form: CustomPasswordChangeForm) -> HttpResponse | JsonResponse:
         """
-        
+        Обрабатывает невалидную форму смены пароля.
 
-        :param form: _description_
-        :type form: _type_
-        :return: _description_
-        :rtype: _type_
+        Для AJAX-запросов возвращает JSON с ошибками валидации (статус 400).
+        Для обычных – вызывает родительский метод.
+
+        :param form: Невалидная форма смены пароля
+        :type form: CustomPasswordChangeForm
+        :return: JSON-ответ при AJAX, иначе HttpResponse
+        :rtype: JsonResponse | HttpResponse
         """
         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
