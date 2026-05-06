@@ -7,12 +7,13 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import View
 from django.db.models.query import QuerySet
+from django.contrib.auth import login
 
 from core.utils.parsers import OzonParser, WbParser, YandexMarketParser, AbstractParser
 from core.models import Product, Shop, Offer, Subscription, UserSetting
 from core.utils.product_utils import save_parsed_offer
 from core.utils.string_utils import normalize_name
-from core.forms import EditProfileForm
+from core.forms import EditProfileForm, CustomRegistrationForm, CustomLoginForm
 
 
 CACHE_PRODUCTS_THRESHOLD: int = 8
@@ -269,6 +270,35 @@ def edit_profile(request: HttpRequest) -> HttpResponse:
 
     except Exception:
         return HttpResponse(status=500)
+
+
+def register(request: HttpRequest) -> HttpResponse:
+    """
+    
+
+    :param request: _description_
+    :type request: HttpRequest
+    :return: _description_
+    :rtype: HttpResponse
+    """
+    if request.user.is_authenticated:
+        return redirect('profile')
+
+    if request.method == 'POST':
+        form = CustomRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('profile')
+    else:
+        form = CustomRegistrationForm()
+
+    context = {
+        'login_form': CustomLoginForm(),
+        'register_form': form,
+        'register_mode': True,
+    }
+    return render(request, 'core/auth.html', context)
 
 
 # Основные view-классы

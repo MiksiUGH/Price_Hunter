@@ -1,57 +1,83 @@
 {% extends "includes/core/base.html" %}
 {% load static %}
 
-{% block title %}{{ block.super }}{% endblock title %}
+{% block title %}{% if register_mode %}Регистрация{% else %}Вход{% endif %} — PriceHunter{% endblock %}
 
-{% block styles %}<link href="{% static 'core/css/auth.css' %}"></link>{% endblock styles %}
+{% block styles %}
+<link href="{% static 'core/css/auth.css' %}">
+{% endblock %}
 
 {% block main %}
 <main class="main-container">
     <div class="form-card">
         <div class="tabs">
-            <button class="tab-btn active" data-tab="login">Вход</button>
-            <button class="tab-btn" data-tab="register">Регистрация</button>
+            <button class="tab-btn {% if not register_mode %}active{% endif %}" data-tab="login">Вход</button>
+            <button class="tab-btn {% if register_mode %}active{% endif %}" data-tab="register">Регистрация</button>
         </div>
 
-        <!-- Форма входа -->
-        <div id="loginPane" class="form-pane active-pane">
+        <!-- Панель входа -->
+        <div id="loginPane" class="form-pane {% if not register_mode %}active-pane{% endif %}">
             <form method="post" action="{% url 'login' %}">
                 {% csrf_token %}
                 <div class="input-group">
-                    <label for="InputEmail"><i class="fas fa-envelope"></i> Email</label>
-                    <input type="text" name="useremail" placeholder="example@mail.ru" id="InputEmail" required>
+                    <label for="{{ login_form.username.id_for_label }}"><i class="fas fa-user"></i> Имя пользователя</label>
+                    {{ login_form.username }}
+                    {% if login_form.username.errors %}
+                        <div class="error-text">{{ login_form.username.errors }}</div>
+                    {% endif %}
                 </div>
                 <div class="input-group">
-                    <label for="InputPassword"><i class="fas fa-lock"></i> Пароль</label>
-                    <input type="password" name="password" placeholder="••••••••" id="InputPassword" required>
+                    <label for="{{ login_form.password.id_for_label }}"><i class="fas fa-lock"></i> Пароль</label>
+                    {{ login_form.password }}
+                    {% if login_form.password.errors %}
+                        <div class="error-text">{{ login_form.password.errors }}</div>
+                    {% endif %}
                 </div>
+                {% if login_form.non_field_errors %}
+                    <div class="error-text">{{ login_form.non_field_errors }}</div>
+                {% endif %}
                 <button type="submit" class="submit-btn">Войти</button>
                 <div class="auth-footer">
-                    <a href="{% url 'edit_password' %}">Забыли пароль?</a>
+                    <a href="#">Забыли пароль?</a>
                 </div>
             </form>
         </div>
 
-        <!-- Форма регистрации -->
-        <div id="registerPane" class="form-pane">
+        <!-- Панель регистрации -->
+        <div id="registerPane" class="form-pane {% if register_mode %}active-pane{% endif %}">
             <form method="post" action="{% url 'register' %}">
                 {% csrf_token %}
                 <div class="input-group">
-                    <label for="InputName"><i class="fas fa-user"></i> Имя пользователя</label>
-                    <input type="text" name="username" placeholder="Nickname" id="InputName" required>
+                    <label for="{{ register_form.username.id_for_label }}"><i class="fas fa-user"></i> Имя пользователя</label>
+                    {{ register_form.username }}
+                    {% if register_form.username.errors %}
+                        <div class="error-text">{{ register_form.username.errors }}</div>
+                    {% endif %}
                 </div>
                 <div class="input-group">
-                    <label for="InputEmail_"><i class="fas fa-envelope"></i> Email</label>
-                    <input type="email" name="email" placeholder="your@email.com" id="InputEmail_" required>
+                    <label for="{{ register_form.email.id_for_label }}"><i class="fas fa-envelope"></i> Email</label>
+                    {{ register_form.email }}
+                    {% if register_form.email.errors %}
+                        <div class="error-text">{{ register_form.email.errors }}</div>
+                    {% endif %}
                 </div>
                 <div class="input-group">
-                    <label for="InputPassword1"><i class="fas fa-lock"></i> Пароль</label>
-                    <input type="password" name="password1" placeholder="Минимум 8 символов" id="InputPassword1" required>
+                    <label for="{{ register_form.password1.id_for_label }}"><i class="fas fa-lock"></i> Пароль</label>
+                    {{ register_form.password1 }}
+                    {% if register_form.password1.errors %}
+                        <div class="error-text">{{ register_form.password1.errors }}</div>
+                    {% endif %}
                 </div>
                 <div class="input-group">
-                    <label for="InputPassword2"><i class="fas fa-lock"></i> Подтверждение пароля</label>
-                    <input type="password" name="password2" placeholder="Повторите пароль" id="InputPassword2" required>
+                    <label for="{{ register_form.password2.id_for_label }}"><i class="fas fa-lock"></i> Подтверждение пароля</label>
+                    {{ register_form.password2 }}
+                    {% if register_form.password2.errors %}
+                        <div class="error-text">{{ register_form.password2.errors }}</div>
+                    {% endif %}
                 </div>
+                {% if register_form.non_field_errors %}
+                    <div class="error-text">{{ register_form.non_field_errors }}</div>
+                {% endif %}
                 <button type="submit" class="submit-btn">Зарегистрироваться</button>
                 <div class="auth-footer">
                     Уже есть аккаунт? <a href="#" id="switchToLogin">Войдите</a>
@@ -60,6 +86,8 @@
         </div>
     </div>
 </main>
-{% endblock main %}
+{% endblock %}
 
-{% block scripts %}<script src="{% static 'core/js/auth.js' %}"></script>{% endblock scripts %}
+{% block scripts %}
+<script src="{% static 'core/js/auth.js' %}"></script>
+{% endblock %}
