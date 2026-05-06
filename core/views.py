@@ -8,12 +8,14 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import View
 from django.db.models.query import QuerySet
 from django.contrib.auth import login
+from django.urls import reverse_lazy
+from django.contrib.auth.views import PasswordChangeView
 
 from core.utils.parsers import OzonParser, WbParser, YandexMarketParser, AbstractParser
 from core.models import Product, Shop, Offer, Subscription, UserSetting
 from core.utils.product_utils import save_parsed_offer
 from core.utils.string_utils import normalize_name
-from core.forms import EditProfileForm, CustomRegistrationForm, CustomLoginForm
+from core.forms import EditProfileForm, CustomRegistrationForm, CustomLoginForm, CustomPasswordChangeForm
 
 
 CACHE_PRODUCTS_THRESHOLD: int = 8
@@ -497,3 +499,39 @@ class SettingsView(View):
 
         except Exception:
             return HttpResponse(status=500)
+
+
+class CustomPasswordChangeView(PasswordChangeView):
+    """
+
+    """
+    form_class = CustomPasswordChangeForm
+    template_name = 'core/change_password.html'
+    success_url = reverse_lazy('profile')
+
+    def form_valid(self, form):
+        """
+        
+
+        :param form: _description_
+        :type form: _type_
+        :return: _description_
+        :rtype: _type_
+        """
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            form.save()
+            return JsonResponse({'status': 'success'})
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        """
+        
+
+        :param form: _description_
+        :type form: _type_
+        :return: _description_
+        :rtype: _type_
+        """
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+        return super().form_invalid(form)

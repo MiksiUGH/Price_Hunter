@@ -1,6 +1,7 @@
 """Файл со всеми формами для core"""
 from django import forms
-from django.contrib.auth.forms import UserChangeForm, UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import (UserChangeForm, UserCreationForm,
+                                       AuthenticationForm, PasswordChangeForm)
 from django.contrib.auth.models import User
 
 
@@ -91,3 +92,24 @@ class CustomRegistrationForm(UserCreationForm):
 
     def clean_email(self):
         return self.cleaned_data.get('email')
+
+
+class CustomPasswordChangeForm(PasswordChangeForm):
+    """Форма смеены пароля"""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['old_password'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Введите старый пароль',
+            'autocomplete': 'current-password'
+        })
+        self.fields['new_password1'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Новый пароль (мин. 8 символов)',
+            'autocomplete': 'new-password'
+        })
+        self.fields['new_password2'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Подтвердите новый пароль',
+            'autocomplete': 'new-password'
+        })
