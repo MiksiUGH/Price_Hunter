@@ -58,7 +58,7 @@ def get_chrome_options() -> Options:
     options.add_argument('--window-size=1920,1080')
 
     # 8. Если нужен headless — раскомментируй, но для отладки лучше видимый браузер
-    # options.add_argument('--headless')
+    options.add_argument('--headless')
 
     # 9. Отключаем сохранение паролей и автозаполнение
     options.add_argument('--disable-save-password-bubble')
@@ -395,9 +395,7 @@ class WbParser(AbstractParser):
                         price = price_in_float(driver.find_element(By.CSS_SELECTOR, 'ins.priceBlockFinalPrice--iToZR').text)
                 availability: bool = WbParser._update_availability(driver)
                 article_number: str = driver.find_element(By.CSS_SELECTOR, 'button.cellCopy--sPwsd > span').text
-                print(article_number)
                 delivery_time: str = driver.find_element(By.CSS_SELECTOR, 'div.deliveryTitleWrapper--WMRNu > span').text
-                print(delivery_time)
                 product: dict[str, str | bool | float] = {
                     'name': name,
                     'price': price,
