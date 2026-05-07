@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.status === 'success') {
                     successModal.style.display = 'flex';
                     setTimeout(() => {
-                        window.location.href = '/hunter/profile/';
+                        window.location.href = '/hunter/profile';
                     }, 3000);
                 } else {
                     if (data.errors) {

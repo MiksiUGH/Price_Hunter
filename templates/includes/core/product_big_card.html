@@ -19,14 +19,20 @@
             <span>🏪 {{ offer.shop.name }}</span>
         </div>
         <div class="card-actions" style="margin-top:20px;">
-            <button class="fav-btn" data-id="{{ offer.id }}">
-                <i class="far fa-heart"></i> В избранное
-            </button>
-            <button class="view-btn" data-url="{{ offer.url }}">
+            {% if is_favorite %}
+                <button class="remove-fav-btn" data-id="{{ offer.id }}">
+                    <i class="fas fa-trash-alt"></i> Удалить
+                </button>
+            {% else %}
+                <button class="fav-btn" data-id="{{ offer.id }}">
+                    <i class="far fa-heart"></i> В избранное
+                </button>
+            {% endif %}
+            <a href="{{ offer.url }}" target="_blank" class="view-btn" rel="noopener noreferrer" style="text-decoration: none;">
                 Перейти на маркетплейс
-            </button>
+            </a>
         </div>
-        <p style="margin-top:12px; font-size:0.75rem;">
+        <p style="margin-top:12px; font-size:0.75rem; overflow: hidden; text-overflow: ellipsis;">
             🔗 URL: {{ offer.url }}
         </p>
     </div>

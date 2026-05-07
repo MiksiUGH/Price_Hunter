@@ -1,6 +1,5 @@
 /* ============================================
    PRODUCT_OFFERS.CSS – стили страницы предложений
-   (только специфичные, общие компоненты в common.css)
    ============================================ */
 
 .product-header {
@@ -10,7 +9,7 @@
 
 .product-header h1 {
     font-size: 2.2rem;
-    background: linear-gradient(135deg, #ffffff, var(--primary-green), #3b82f6);
+    background: linear-gradient(135deg, var(--text-white), var(--primary-green), #3b82f6);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -52,7 +51,7 @@
     margin: 1rem 0 2rem;
 }
 
-/* Особые стили для кнопок избранного на этой странице */
+/* Кнопки избранного */
 .product-card .fav-btn,
 .product-card .remove-fav-btn {
     background: rgba(0, 0, 0, 0.5);

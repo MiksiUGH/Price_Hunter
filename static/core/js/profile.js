@@ -136,16 +136,26 @@ document.addEventListener('DOMContentLoaded', () => {
         function getCurrentCardsData() {
             const cards = Array.from(favoritesContainer.querySelectorAll('.product-card'));
             return cards.map(card => {
-                // Цена
+                // Цена (минимальная из диапазона)
                 const priceElem = card.querySelector('.card-price');
                 let price = 0;
                 if (priceElem) {
-                    const priceText = priceElem.innerText.replace(/[^\d]/g, '');
-                    price = parseInt(priceText) || 0;
+                    const priceText = priceElem.innerText;
+                    // Ищем первое число (минимальную цену) – оно идёт до пробела или до тире
+                    const match = priceText.match(/(\d[\d\s]*?)\s*[–-]/);
+                    if (match) {
+                        price = parseInt(match[1].replace(/\s/g, '')) || 0;
+                    } else {
+                        // Если не нашли диапазон, то берём всё число
+                        price = parseInt(priceText.replace(/[^\d]/g, '')) || 0;
+                    }
                 }
-                // Магазин (последний span в .card-meta:last-child)
+                // Магазин – убираем эмодзи и оставляем только название
                 const shopElem = card.querySelector('.card-meta:last-child span:last-child');
-                let shop = shopElem ? shopElem.innerText.trim() : '';
+                let shop = '';
+                if (shopElem) {
+                    shop = shopElem.innerText.replace(/[🏷️]/g, '').trim();
+                }
                 // Доставка
                 const deliveryElem = card.querySelector('.card-meta:first-child span:last-child');
                 let deliveryDays = 9999;
@@ -163,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Фильтрация и сортировка (перерисовка)
-        window.filterAndSort = function() { // делаем глобальной, чтобы можно было вызвать из removeFromFavorites
+        window.filterAndSort = function() {
             let minPrice = priceFrom ? parseInt(priceFrom.value) || 0 : 0;
             let maxPrice = priceTo ? parseInt(priceTo.value) || Infinity : Infinity;
             if (priceTo && priceTo.value === '') maxPrice = Infinity;

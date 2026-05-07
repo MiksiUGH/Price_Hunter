@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
         params.append('limit', 20);
 
         try {
-            const response = await fetch(`/hunter/query_search/?${params.toString()}`);
+            const response = await fetch(`/hunter/query_search?${params.toString()}`);
             if (!response.ok) throw new Error();
             const html = await response.text();
             productsContainer.innerHTML = html;
@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const params = new URLSearchParams();
                 params.append('url', urlValue);
-                const response = await fetch(`/hunter/url_search/?${params.toString()}`);
+                const response = await fetch(`/hunter/url_search?${params.toString()}`);
                 if (!response.ok) throw new Error();
                 const html = await response.text();
                 urlResultArea.innerHTML = html;

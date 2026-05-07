@@ -23,8 +23,8 @@ from core.forms import (EditProfileForm, CustomRegistrationForm,
 CACHE_PRODUCTS_THRESHOLD: int = 8
 PARSERS_BY_SLUG: dict[str, AbstractParser] = {
     'wb': WbParser,
-    'ozon': OzonParser,
-    'yandex': YandexMarketParser,
+    # 'ozon': OzonParser,
+    # 'yandex': YandexMarketParser,
 }
 USER_SETTINGS_VALUES: dict[str, set[str | int | bool]] = {
     'theme': ('dark', 'light'),
@@ -133,29 +133,33 @@ def query_search(request: HttpRequest) -> HttpResponse:
             return render(request, 'core/partials/search_results.html', context={'products': best_matches})
 
         limit: int = max(CACHE_PRODUCTS_THRESHOLD - len(best_matches), 1)
+        parsed_products: set[Product] = set()
+        print(f"DEBUG: limit = {limit}")
         for sl, shop in PARSERS_BY_SLUG.items():
             if limit <= 0:
                 break
-            parsed: list[dict[str, float | str | bool]] = shop.search_by_query(query, answer_cnt=limit * 2)
+            parsed = shop.search_by_query(query, answer_cnt=limit * 2)
+            print(f"DEBUG: {sl} returned {len(parsed) if isinstance(parsed, list) else 'non-list'}, content: {parsed if isinstance(parsed, list) else parsed.keys() if isinstance(parsed, dict) else 'unknown'}")
             if not parsed or (isinstance(parsed, dict) and 'error' in parsed):
                 continue
 
             for offer in parsed:
-                if Offer.objects.filter(article_number=offer['article_number'], url=offer['url']):
-                    continue
                 shop_obj, _ = Shop.objects.get_or_create(slug=sl, defaults={'name': offer['marketplace']})
-                save_parsed_offer(offer, shop_obj)
+                parsed_offer = save_parsed_offer(offer, shop_obj)
+                parsed_products.add(parsed_offer.product)
 
-        all_products = Product.objects.all()
         best_matches.clear()
-        for p in all_products:
-            if check_name_matches(query, p.normalized_name):
-                add_product_in_matches(p, best_matches)
+        print(f"DEBUG: parsed_products count = {len(parsed_products)}")
+        for p in parsed_products:
+            print(f"  - {p.name} (id={p.id})")
+            add_product_in_matches(p, best_matches)
+        print(f"DEBUG: best_matches count before render = {len(best_matches)}")
 
-        best_matches = sorted(best_matches, key=lambda x: x['min_price'])
         return render(request, 'core/partials/search_results.html', context={"products": best_matches})
 
-    except Exception:
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
         return HttpResponse(status=500)
 
 
@@ -191,7 +195,12 @@ def url_search(request: HttpRequest) -> HttpResponse:
             defaults={'name': parsed.get('marketplace', slug.capitalize()), 'search_url_template': ''}
         )
         offer: Offer = save_parsed_offer(parsed, shop)
-        return render(request, 'includes/core/product_big_card.html', {'offer': offer})
+
+        is_favorite = False
+        if request.user.is_authenticated:
+            is_favorite = Subscription.objects.filter(user=request.user, offer=offer, is_active=True).exists()
+
+        return render(request, 'includes/core/product_big_card.html', {'offer': offer, 'is_favorite': is_favorite})
 
     except Exception:
         return HttpResponse(status=500)

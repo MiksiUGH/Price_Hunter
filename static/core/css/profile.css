@@ -1,6 +1,5 @@
 /* ============================================
    PROFILE.CSS – страница профиля пользователя
-   (только специфичные стили, общие вынесены в common.css)
    ============================================ */
 
 .main-container {
@@ -54,18 +53,30 @@
     border: 1px solid var(--primary-blue);
     padding: 0.6rem 1rem;
     border-radius: 40px;
-    color: white;
+    color: var(--text-white);
     cursor: pointer;
     width: 100%;
     margin-top: 0.5rem;
     text-align: center;
     display: inline-block;
+    text-decoration: none;
 }
 .logout-btn {
     background: rgba(255,94,126,0.2);
     border: 1px solid var(--danger);
     color: #ff9eae;
     margin-top: 1rem;
+}
+.delete-account-btn {
+    background: rgba(220, 53, 69, 0.2);
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    margin-top: 1rem;
+}
+.delete-account-btn:hover {
+    background: var(--danger);
+    color: white;
+    transform: translateY(-2px);
 }
 .profile-content {
     flex: 2;
@@ -119,17 +130,6 @@
     border-left: 3px solid var(--primary-green);
     padding-left: 1rem;
 }
-.delete-account-btn {
-    background: rgba(220, 53, 69, 0.2);
-    border: 1px solid var(--danger);
-    color: var(--danger);
-    margin-top: 1rem;
-}
-.delete-account-btn:hover {
-    background: var(--danger);
-    color: white;
-    transform: translateY(-2px);
-}
 
 /* Адаптивность */
 @media (max-width: 767px) {
@@ -142,4 +142,13 @@
     .avatar { width: 90px; height: 90px; font-size: 2.2rem; }
     .profile-name { font-size: 1.2rem; }
     .info-card { padding: 1rem; }
+}
+.favorites-section .product-card {
+    animation: none;
+    opacity: 1;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.favorites-section .product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }

@@ -60,3 +60,25 @@ def str_in_date(str_date: str) -> datetime.date:
             return datetime.date(current_year, month, day)
     except Exception:
         return datetime.date.today() + datetime.timedelta(days=60)
+
+
+def clean_product_name(name: str) -> str:
+    """
+    Очищает название товара от типового мусора:
+    - Удаляет начальные слеши, дефисы, точки
+    - Удаляет артикулы в круглых скобках (чисто цифры)
+    - Удаляет содержимое квадратных скобок (включая сами скобки)
+    - Убирает лишние пробелы
+    """
+    if not name:
+        return ''
+    
+    # Удаляем начальные символы: / - . и пробелы
+    name = re.sub(r'^[\s/\.\-]+', '', name)
+    # Удаляем артикулы в круглых скобках (только цифры, возможно с пробелом)
+    name = re.sub(r'\s*\(\s*\d+\s*\)', '', name)
+    # Удаляем квадратные скобки с содержимым (например, [White Blue Colour-In])
+    name = re.sub(r'\s*\[[^\]]*\]', '', name)
+    # Удаляем остальные нежелательные символы (лишние пробелы)
+    name = re.sub(r'\s+', ' ', name)
+    return name.strip()

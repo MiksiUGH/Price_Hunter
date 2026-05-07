@@ -1,11 +1,10 @@
 """Файл со всеми формами для core"""
 from django import forms
-from django.contrib.auth.forms import (UserChangeForm, UserCreationForm,
-                                       AuthenticationForm, PasswordChangeForm)
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, PasswordChangeForm
 from django.contrib.auth.models import User
 
 
-class EditProfileForm(UserChangeForm):
+class EditProfileForm(forms.ModelForm):
     """Форма для изменения информации о пользователе"""
     username = forms.CharField(
         max_length=30,

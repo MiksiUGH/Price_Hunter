@@ -142,6 +142,7 @@
     border-radius: 60px;
     font-weight: bold;
     cursor: pointer;
+    color: #000;
 }
 
 /* Адаптивность */
@@ -160,7 +161,7 @@
     .search-bar { padding: 0; margin-bottom: 1.5rem; }
     #productNameSearch { padding: 1rem 1.2rem; font-size: 1rem; }
     .search-btn { padding: 0 1.2rem; font-size: 1rem; }
-    .url-left, .url-right { padding: 1.2rem; }
+    .url-left, .url-right { padding: 1.2rem; max-width: 100%; }
 }
 @media (max-width: 575px) {
     .hero-title { font-size: 2rem; }
@@ -173,4 +174,9 @@
     .url-input-group { flex-direction: column; }
     .url-input, .btn-primary { width: 100%; text-align: center; justify-content: center; }
     .btn-primary { padding: 0.8rem; }
+}
+#productsContainer .product-card {
+    animation: none;
+    opacity: 1;
+    transform: none;
 }

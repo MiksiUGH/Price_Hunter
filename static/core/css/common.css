@@ -29,8 +29,8 @@ html.light-theme {
     --bg-gradient: radial-gradient(circle at 10% 20%, #eef2f9, #d4e0ec);
     --card-bg: rgba(255, 255, 255, 0.92);
     --card-border: rgba(0, 100, 80, 0.25);
-    --primary-green: #008b5f;
-    --primary-blue: #1a5bc4;
+    --primary-green: #00c853;
+    --primary-blue: #2d7aff;
     --text-white: #1a2a3a;
     --text-muted: #2c4c66;
     --input-bg: #ffffff;
@@ -209,6 +209,9 @@ body {
     font-size: 1.1rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
+    word-break: break-word;
+    white-space: normal;
+    overflow: visible;  
 }
 .card-price {
     font-size: 1.6rem;
@@ -429,4 +432,28 @@ button:hover, .menu-btn:hover, .edit-btn:hover, .save-btn:hover, .cancel-btn:hov
     padding: 1.5rem;
     border: 1px solid rgba(0, 230, 118, 0.3);
     box-shadow: 0 20px 35px rgba(0,0,0,0.3);
+}
+/* Кнопки (общий стиль) */
+.btn, .view-offers-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: linear-gradient(95deg, var(--primary-green), var(--primary-blue));
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 40px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.btn:hover, .view-offers-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 230, 118, 0.3);
+}
+.btn:active, .view-offers-btn:active {
+    transform: translateY(1px);
 }

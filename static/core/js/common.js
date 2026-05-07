@@ -74,7 +74,7 @@ function showAuthModal() {
 // ----- Работа с избранным (общие функции) -----
 async function addToFavorites(offerId, btn) {
     try {
-        const response = await fetch(`/hunter/favorites/${offerId}/`, {
+        const response = await fetch(`/hunter/favorites/${offerId}`, {
             method: 'POST',
             headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' }
         });
@@ -96,7 +96,7 @@ async function addToFavorites(offerId, btn) {
 
 async function removeFromFavorites(offerId, btn) {
     try {
-        const response = await fetch(`/hunter/favorites/${offerId}/`, {
+        const response = await fetch(`/hunter/favorites/${offerId}`, {
             method: 'DELETE',
             headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' }
         });

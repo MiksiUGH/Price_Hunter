@@ -5,7 +5,7 @@
     padding: 1.5rem;
 }
 .settings-card {
-    background: rgba(18, 25, 40, 0.85);
+    background: var(--card-bg);
     backdrop-filter: blur(12px);
     border-radius: 32px;
     padding: 2rem;
@@ -41,13 +41,17 @@
     min-width: 200px;
 }
 select, input {
-    background: #0c121c;
-    border: 1px solid #2a3a4a;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
     border-radius: 40px;
     padding: 0.6rem 1rem;
-    color: white;
+    color: var(--text-white);
     width: 100%;
     max-width: 250px;
+    transition: 0.2s;
+}
+select:hover, input:hover {
+    border-color: var(--primary-green);
 }
 button.save-btn {
     background: linear-gradient(95deg, var(--primary-green), var(--primary-blue));
@@ -58,6 +62,10 @@ button.save-btn {
     cursor: pointer;
     color: #000;
     margin-top: 1rem;
+    transition: 0.2s;
+}
+button.save-btn:hover {
+    transform: translateY(-2px);
 }
 .note {
     font-size: 0.8rem;
@@ -70,47 +78,4 @@ button.save-btn {
     .setting-row { flex-direction: column; align-items: flex-start; }
     .setting-control { width: 100%; }
     select, input { max-width: 100%; }
-}
-
-/* ========== АНИМАЦИИ СТРАНИЦЫ НАСТРОЕК ========== */
-
-/* Появление карточки настроек */
-.settings-card {
-    animation: fadeSlideRight 0.4s ease;
-}
-@keyframes fadeSlideRight {
-    from { opacity: 0; transform: translateX(-15px); }
-    to { opacity: 1; transform: translateX(0); }
-}
-
-/* Строки настроек – подсветка при наведении */
-.setting-row {
-    transition: background 0.2s, padding-left 0.2s;
-    border-radius: 60px;
-    padding: 1rem 1rem;
-}
-.setting-row:hover {
-    background: rgba(0, 230, 118, 0.05);
-    padding-left: 1.5rem;
-}
-
-/* Селекты – плавное изменение */
-select {
-    transition: all 0.2s;
-}
-select:hover {
-    border-color: var(--primary-green);
-    background: #1a2533;
-}
-select:focus {
-    transform: scale(1.01);
-}
-
-/* Кнопка сохранения – пульсация при нажатии */
-.save-btn:active {
-    animation: bounce 0.2s;
-}
-@keyframes bounce {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.03); }
 }

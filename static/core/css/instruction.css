@@ -15,7 +15,7 @@
     color: transparent;
 }
 .step-card {
-    background: rgba(18, 25, 40, 0.75);
+    background: var(--card-bg);
     backdrop-filter: blur(8px);
     border-radius: 28px;
     padding: 1.5rem;
@@ -79,7 +79,6 @@
     .step-content { padding-left: 1rem; }
     .step-title { font-size: 1.2rem; }
 }
-
 .step-card {
     opacity: 0;
     transform: translateY(25px);
@@ -93,13 +92,11 @@
 .step-card:nth-child(3) { animation-delay: 0.3s; }
 .step-card:nth-child(4) { animation-delay: 0.4s; }
 .step-card:nth-child(5) { animation-delay: 0.5s; }
-
 .step-card:hover {
     transform: translateY(-5px) scale(1.01);
     transition: all 0.2s;
     border-color: var(--primary-green);
 }
-
 .hero-instruction h1 {
     animation: glow 1.5s ease-in-out infinite alternate;
 }
@@ -107,7 +104,6 @@
     from { text-shadow: 0 0 5px rgba(0,230,118,0.3); }
     to { text-shadow: 0 0 20px rgba(0,230,118,0.7); }
 }
-
 .faq-section {
     animation: fadeIn 0.7s ease-out 0.6s forwards;
     opacity: 0;

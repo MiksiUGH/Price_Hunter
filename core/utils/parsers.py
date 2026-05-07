@@ -335,7 +335,7 @@ class WbParser(AbstractParser):
                             if str_in_date(delivery_time) - datetime.date.today() > datetime.timedelta(days=delivery_limit):
                                 continue
 
-                        name: str = card.find_element(By.CSS_SELECTOR, 'span.product-card__name').text
+                        name: str = card.find_element(By.CSS_SELECTOR, 'span.product-card__name').text.lstrip('/').strip()
                         price: float = price_in_float(card.find_element(By.CSS_SELECTOR, 'ins.price__lower-price').text)
                         availability: bool = WbParser._check_availability(card)
                         url_el = card.find_element(By.CSS_SELECTOR, 'a.product-card__link')
