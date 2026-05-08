@@ -4,6 +4,7 @@ from difflib import SequenceMatcher
 from json import loads
 
 from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import View
 from django.db.models.query import QuerySet
@@ -79,9 +80,34 @@ def add_product_in_matches(p: Product, matches: list) -> None:
     matches.append(product)
 
 
+def check_product_on_filters(p: Product, filters: dict[str, int | set[str]]) -> bool:
+    """
+    Проверяет, есть ли у продукта хотя бы одно активное предложение,
+    удовлетворяющее заданным фильтрам (цена, доставка, маркетплейсы).
+
+    :param p: Объект Product
+    :type p: Product
+    :param filters: Словарь с ключами 'price_min', 'price_max', 'delivery_days', 'marketplaces'
+    :type filters: dict[str, int  |  set[str]]
+    :return: True, если хотя бы одно предложение подходит под фильтры, иначе False
+    :rtype: bool
+    """
+    offers = p.offers.filter(is_active=True)
+    if filters.get('price_min'):
+        offers = offers.filter(price__gte=filters['price_min'])
+    if filters.get('price_max'):
+        offers = offers.filter(price__lte=filters['price_max'])
+    if filters.get('delivery_days') and filters['delivery_days'] != 9999:
+        offers = offers.filter(Q(delivery_days__lte=filters['delivery_days']) | Q(delivery_days__isnull=True))
+    if filters.get('marketplaces'):
+        offers = offers.filter(shop__name__in=filters['marketplaces'])
+    return offers.exists()
+
+
 def check_name_matches(name1: str, name2: str, best_ratio: float = 0.8) -> bool:
     """
-    Сравнивает 2 имени на похожесть
+    Сравнивает два имени с помощью SequenceMatcher и возвращает True,
+    если коэффициент схожести >= заданного порога.
 
     :param name1: Первое имя
     :type name1: str
@@ -120,44 +146,74 @@ def query_search(request: HttpRequest) -> HttpResponse:
         if not query:
             return render(request, 'core/partials/search_results.html', {'products': []})
 
+        try:
+            price_min: int = int(request.GET.get('price_min', 0))
+        except Exception:
+            price_min = 0
+
+        try:
+            price_max: int = int(request.GET.get('price_max', 9999999))
+        except Exception:
+            price_max = 9999999
+
+        try:
+            delivery_days: int = int(request.GET.get('delivery_days', 9999))
+        except Exception:
+            delivery_days = 9999
+
+        try:
+            marketplaces = set(request.GET.getlist('marketplaces'))
+            if not marketplaces or 'all' in marketplaces:
+                marketplaces = None
+        except Exception:
+            marketplaces = set()
+            marketplaces.add('all')
+
+        filters: dict[str, str | set[str]] = {
+            'price_min': price_min,
+            'price_max': price_max,
+            'delivery_days': delivery_days,
+            'marketplaces': marketplaces
+        }
+
         all_products: QuerySet[Product] = Product.objects.all()
         best_matches: list[dict[str, Product | int | set[str]]] = []
+        match_products: set[Product] = set()
         for p in all_products:
             if check_name_matches(query, p.normalized_name):
+                match_products.add(p)
+
+        for p in match_products:
+            if check_product_on_filters(p, filters):
                 add_product_in_matches(p, best_matches)
 
         if best_matches:
             best_matches = sorted(best_matches, key=lambda x: x['min_price'])
 
-        if len(best_matches) >= 8:
-            return render(request, 'core/partials/search_results.html', context={'products': best_matches})
+        if len(best_matches) >= 30:
+            return render(request, 'core/partials/search_results.html', context={"products": best_matches[:30]})
 
-        limit: int = max(CACHE_PRODUCTS_THRESHOLD - len(best_matches), 1)
         parsed_products: set[Product] = set()
-        print(f"DEBUG: limit = {limit}")
+        answer_cnt: int = max(0, 30 - len(best_matches))
         for sl, shop in PARSERS_BY_SLUG.items():
-            if limit <= 0:
-                break
-            parsed = shop.search_by_query(query, answer_cnt=limit * 2)
-            print(f"DEBUG: {sl} returned {len(parsed) if isinstance(parsed, list) else 'non-list'}, content: {parsed if isinstance(parsed, list) else parsed.keys() if isinstance(parsed, dict) else 'unknown'}")
+            parsed = shop.search_by_query(query, min(answer_cnt, 10), [price_min, price_max], delivery_days)
             if not parsed or (isinstance(parsed, dict) and 'error' in parsed):
                 continue
 
             for offer in parsed:
                 shop_obj, _ = Shop.objects.get_or_create(slug=sl, defaults={'name': offer['marketplace']})
-                parsed_offer = save_parsed_offer(offer, shop_obj)
-                parsed_products.add(parsed_offer.product)
+                offer: Offer = save_parsed_offer(offer, shop_obj)
+                parsed_products.add(offer.product)
 
-        best_matches.clear()
-        print(f"DEBUG: parsed_products count = {len(parsed_products)}")
+        products: list[Product] = [x['product'] for x in best_matches]
         for p in parsed_products:
-            print(f"  - {p.name} (id={p.id})")
-            add_product_in_matches(p, best_matches)
-        print(f"DEBUG: best_matches count before render = {len(best_matches)}")
+            if p not in products:
+                add_product_in_matches(p, best_matches)
 
-        return render(request, 'core/partials/search_results.html', context={"products": best_matches})
+        best_matches = sorted(best_matches, key=lambda x: x['min_price'])
+        return render(request, 'core/partials/search_results.html', context={"products": best_matches[:30]})
 
-    except Exception as e:
+    except Exception:
         import traceback
         traceback.print_exc()
         return HttpResponse(status=500)
@@ -212,6 +268,8 @@ def product_offers(request: HttpRequest, slug: str) -> HttpResponse:
     Отображает страницу со всеми активными предложениями (Offer) для заданного продукта.
     Для авторизованных пользователей помечает избранные предложения (is_favorite).
     Вычисляет минимальную и максимальную цену среди всех предложений продукта.
+    Также передаёт в шаблон значения фильтров из GET-параметров (selected_price_min,
+    selected_price_max, selected_delivery_days, selected_marketplaces) для их предустановки.
 
     :param request: Http-запрос
     :type request: HttpRequest
@@ -250,6 +308,10 @@ def product_offers(request: HttpRequest, slug: str) -> HttpResponse:
         'product': product,
         'min_price': min_price,
         'max_price': max_price,
+        'selected_price_min': request.GET.get('price_min', min_price),
+        'selected_price_max': request.GET.get('price_max', max_price),
+        'selected_delivery_days': request.GET.get('delivery_days', '9999'),
+        'selected_marketplaces': request.GET.getlist('marketplaces', ['all']),
     })
 
 
@@ -416,7 +478,6 @@ class FavoritesView(View):
 
         except Exception:
             return HttpResponse(status=500)
-
 
     def delete(self, request: HttpRequest, offer_id: int) -> HttpResponse:
         """

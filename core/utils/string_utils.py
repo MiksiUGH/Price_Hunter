@@ -13,7 +13,11 @@ STOP_WORDS: set[str] = {
 
 def normalize_name(name: str) -> str:
     """
-    Нормализует имя или запрос
+    Нормализует имя товара для поиска и сравнения:
+    1. Очищает от мусора (скобки, дубликаты слов и т.п.) через clean_product_name
+    2. Приводит к нижнему регистру, заменяет 'ё' на 'е'
+    3. Удаляет стоп-слова
+    4. Убирает пунктуацию и лишние пробелы
 
     :param name: Изначальоне имя
     :type name: str
@@ -23,13 +27,14 @@ def normalize_name(name: str) -> str:
     if not name:
         return ''
 
+    name = clean_product_name(name)
     name = name.lower()
     name = name.replace('ё', 'е')
     name = re.sub(r'[^\w\s]', '', name)
     words = name.split()
     words = [w for w in words if w not in STOP_WORDS]
     normalized = ' '.join(words)
-    return normalized
+    return normalized.strip()
 
 
 def str_in_date(str_date: str) -> datetime.date:
@@ -46,6 +51,7 @@ def str_in_date(str_date: str) -> datetime.date:
         'мая': 5, 'июня': 6, 'июля': 7, 'августа': 8,
         'сентября': 9, 'октября': 10, 'ноября': 11, 'декабря': 12
     }
+
     try:
         if str_date.capitalize() == 'Завтра':
             return datetime.date.today() + datetime.timedelta(days=1)
@@ -56,8 +62,13 @@ def str_in_date(str_date: str) -> datetime.date:
             day = int(match.group(1))
             month_name = match.group(2)
             month = months[month_name]
-            current_year = datetime.datetime.now().year
-            return datetime.date(current_year, month, day)
+            today = datetime.date.today()
+            candidate = datetime.date(today.year, month, day)
+
+            if candidate < today:
+                candidate = datetime.date(today.year + 1, month, day)
+
+            return candidate
     except Exception:
         return datetime.date.today() + datetime.timedelta(days=60)
 
@@ -69,16 +80,31 @@ def clean_product_name(name: str) -> str:
     - Удаляет артикулы в круглых скобках (чисто цифры)
     - Удаляет содержимое квадратных скобок (включая сами скобки)
     - Убирает лишние пробелы
+    - Удаляет повторяющиеся слова (игнорируя регистр)
     """
     if not name:
         return ''
-    
+
     # Удаляем начальные символы: / - . и пробелы
     name = re.sub(r'^[\s/\.\-]+', '', name)
     # Удаляем артикулы в круглых скобках (только цифры, возможно с пробелом)
     name = re.sub(r'\s*\(\s*\d+\s*\)', '', name)
     # Удаляем квадратные скобки с содержимым (например, [White Blue Colour-In])
     name = re.sub(r'\s*\[[^\]]*\]', '', name)
-    # Удаляем остальные нежелательные символы (лишние пробелы)
-    name = re.sub(r'\s+', ' ', name)
-    return name.strip()
+
+    # Извлекаем слова для обработки дубликатов
+    words = re.findall(r'\w+', name)
+    seen = set()
+    unique_words = []
+
+    for word in words:
+        if word.lower() not in seen:
+            seen.add(word.lower())
+            unique_words.append(word)
+
+    # Восстанавливаем строку из уникальных слов
+    cleaned_name = ' '.join(unique_words)
+
+    # Убираем лишние пробелы и возвращаем результат
+    cleaned_name = re.sub(r'\s+', ' ', cleaned_name)
+    return cleaned_name.strip()

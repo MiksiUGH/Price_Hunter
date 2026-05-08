@@ -12,8 +12,11 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 
+from django.db.models.query import QuerySet
 from fake_useragent import UserAgent
 from webdriver_manager.chrome import ChromeDriverManager
+
+from core.models import Offer
 from .string_utils import str_in_date
 
 
@@ -325,36 +328,54 @@ class WbParser(AbstractParser):
             except common.TimeoutException:
                 WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'article.product-card')))
                 result: list[dict[str, str | bool | float]] = []
-                cards = driver.find_elements(By.CSS_SELECTOR, 'article.product-card')[:answer_cnt * 2]
-                for card in cards:
-                    if res_cnt == 0:
+                pars_cnt: int = 0
+                existing_articles: set[str] = set(Offer.objects.filter(
+                    shop__slug='wb',
+                    is_active=True,
+                    article__isnull=False
+                ).values_list('article', flat=True))
+
+                while res_cnt > 0:
+                    left: int = answer_cnt * 2 * pars_cnt
+                    right: int = answer_cnt * 2 * (pars_cnt + 1)
+                    cards = driver.find_elements(By.CSS_SELECTOR, 'article.product-card')[left:right]
+                    if not cards:
                         break
-                    try:
-                        delivery_time: str = card.find_element(By.CSS_SELECTOR, 'span[data-helper="delivery-display"]').text
-                        if delivery_limit:
-                            if str_in_date(delivery_time) - datetime.date.today() > datetime.timedelta(days=delivery_limit):
+                    driver.execute_script("arguments.scrollIntoView(true);", cards[0])
+                    for card in cards:
+                        if res_cnt == 0:
+                            break
+                        try:
+                            article_number: str = card.get_attribute('data-nm-id')
+                            if article_number in existing_articles:
                                 continue
 
-                        name: str = card.find_element(By.CSS_SELECTOR, 'span.product-card__name').text.lstrip('/').strip()
-                        price: float = price_in_float(card.find_element(By.CSS_SELECTOR, 'ins.price__lower-price').text)
-                        availability: bool = WbParser._check_availability(card)
-                        url_el = card.find_element(By.CSS_SELECTOR, 'a.product-card__link')
-                        url: str = url_el.get_attribute('href')
-                        article_number: str = card.get_attribute('data-nm-id')
-                        product: dict[str, str | bool | float] = {
-                            'name': name,
-                            'price': price,
-                            'availability': availability,
-                            'article_number': article_number,
-                            'url': url,
-                            'delivery_time': delivery_time.strip().replace(',', ''),
-                            'marketplace': 'Wildberries',
-                        }
-                        result.append(product)
-                        res_cnt -= 1
+                            delivery_time: str = card.find_element(By.CSS_SELECTOR, 'span[data-helper="delivery-display"]').text
+                            if delivery_limit:
+                                if str_in_date(delivery_time) - datetime.date.today() > datetime.timedelta(days=delivery_limit):
+                                    continue
 
-                    except Exception:
-                        continue
+                            name: str = card.find_element(By.CSS_SELECTOR, 'span.product-card__name').text.lstrip('/').strip()
+                            price: float = price_in_float(card.find_element(By.CSS_SELECTOR, 'ins.price__lower-price').text)
+                            availability: bool = WbParser._check_availability(card)
+                            url_el = card.find_element(By.CSS_SELECTOR, 'a.product-card__link')
+                            url: str = url_el.get_attribute('href')
+                            product: dict[str, str | bool | float] = {
+                                'name': name,
+                                'price': price,
+                                'availability': availability,
+                                'article_number': article_number,
+                                'url': url,
+                                'delivery_time': delivery_time.strip().replace(',', ''),
+                                'marketplace': 'Wildberries',
+                            }
+                            result.append(product)
+                            res_cnt -= 1
+                            existing_articles.add(article_number)
+
+                        except Exception:
+                            continue
+                    pars_cnt += 1
 
                 return result
 
