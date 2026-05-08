@@ -31,8 +31,8 @@
         <div class="filter-card">
             <div class="filter-label">💰 Цена (₽)</div>
             <div class="price-range">
-                <input type="number" id="priceFrom" placeholder="От" value="{{ min_price }}">
-                <input type="number" id="priceTo" placeholder="До" value="{{ max_price }}">
+                <input type="number" id="priceFrom" placeholder="От" value="{{ min_price|floatformat:0 }}">
+                <input type="number" id="priceTo" placeholder="До" value="{{ max_price|floatformat:0 }}">
             </div>
         </div>
 

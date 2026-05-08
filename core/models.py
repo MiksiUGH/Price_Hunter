@@ -50,6 +50,7 @@ class Offer(models.Model):
     """
     Модель конкретного предложения с маркетплейсов
     """
+    title = models.CharField('Название предложения', max_length=500, blank=True, null=True)
     url = models.URLField('URL страницы', unique=True)
     article = models.CharField('Артикул', max_length=100, blank=True, null=True, db_index=True)
     price = models.DecimalField('Текущая цена', decimal_places=2, max_digits=10)

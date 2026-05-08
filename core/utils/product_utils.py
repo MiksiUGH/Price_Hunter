@@ -87,26 +87,26 @@ def save_parsed_offer(parsed: dict[str, str | bool | float], shop: Shop) -> Offe
     :rtype: Offer
     """
     product: Product = get_or_create_product_by_name(parsed['name'])
-    offer, created = Offer.objects.get_or_create(
-        product=product,
-        shop=shop,
-        article=parsed['article_number'],
+
+    offer, created = Offer.objects.update_or_create(
+        url=parsed['url'],
         defaults={
-            'url': parsed['url'],
+            'product': product,
+            'shop': shop,
+            'article': parsed['article_number'],
             'price': parsed['price'],
             'delivery_days': (str_in_date(parsed['delivery_time']) - date.today()).days,
             'in_stock': parsed['availability'],
             'is_active': True,
+            'title': parsed['name'],
         }
     )
+
     if not created:
-        offer.price = parsed['price']
-        offer.in_stock = parsed['availability']
-        offer.delivery_days = (str_in_date(parsed['delivery_time']) - date.today()).days
         offer.last_updated = timezone.now()
         offer.save()
 
-    last_history: PriceHistory = offer.price_history.first()
+    last_history = offer.price_history.first()
     if not last_history or last_history.price != parsed['price']:
         PriceHistory.objects.create(offer=offer, price=parsed['price'], in_stock=parsed['availability'])
 

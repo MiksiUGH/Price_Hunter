@@ -1,9 +1,8 @@
 // profile.js – удаление из избранного, кнопка выхода + модальное окно для ошибок
 
 document.addEventListener('DOMContentLoaded', () => {
-    // ---------- Создаём красивое модальное окно (один раз) ----------
+    // ---------- Модальное окно ошибки ----------
     function createModal() {
-        // Проверяем, нет ли уже модалки на странице
         if (document.getElementById('customErrorModal')) return;
 
         const modalHTML = `
@@ -49,12 +48,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const msgSpan = document.getElementById('errorModalMessage');
         if (msgSpan) msgSpan.innerText = message;
         modal.style.display = 'flex';
-        // небольшая задержка для анимации
         setTimeout(() => modal.classList.add('show'), 10);
     }
 
-    // ---------- Основная логика ----------
-    // Выход
+    // ---------- Выход ----------
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async () => {
@@ -66,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Единая функция удаления (используется и при загрузке, и после фильтрации)
+    // ---------- Удаление из избранного ----------
     async function removeFromFavorites(btn) {
         const offerId = btn.getAttribute('data-id');
         if (!offerId) return;
@@ -83,48 +80,52 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (!response.ok) throw new Error('Ошибка сервера');
 
+            // Удаляем карточку из исходного списка
             const card = btn.closest('.product-card');
-            if (card) card.remove();
+            if (card) {
+                const index = window.allCardsData.findIndex(item => item.card === card);
+                if (index !== -1) window.allCardsData.splice(index, 1);
+                card.remove();
+            }
 
+            // Обновляем счётчик
             const countSpan = document.getElementById('favoritesCount');
             if (countSpan) {
                 const remaining = document.querySelectorAll('.favorites-section .product-card').length;
                 countSpan.innerText = remaining;
             }
 
+            // Если не осталось карточек – показываем сообщение
             const container = document.getElementById('favoritesContainer');
             if (container && container.querySelectorAll('.product-card').length === 0) {
                 container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem;">⭐ Нет избранных товаров.</div>';
+                window.allCardsData = [];
             }
 
-            // После удаления карточки обновляем фильтры (чтобы они работали по новому списку)
-            if (typeof filterAndSort === 'function') filterAndSort();
+            // Переприменяем фильтры (чтобы обновить отображение)
+            if (typeof window.filterAndSort === 'function') window.filterAndSort();
         } catch (error) {
             console.error(error);
             showErrorModal('Не удалось удалить товар из избранного. Попробуйте позже.');
         }
     }
 
-    // Обработчик клика для кнопок удаления
     function handleRemoveClick(e) {
         e.preventDefault();
         removeFromFavorites(e.currentTarget);
     }
 
-    // Привязывает обработчики ко всем .remove-fav-btn внутри контейнера
     function attachRemoveHandlers(container) {
         const btns = container.querySelectorAll('.remove-fav-btn');
         btns.forEach(btn => {
-            // Удаляем старый обработчик, если есть
             btn.removeEventListener('click', handleRemoveClick);
             btn.addEventListener('click', handleRemoveClick);
         });
     }
 
-    // ---------- Клиентские фильтры и сортировка (без кеширования) ----------
+    // ---------- Клиентские фильтры и сортировка ----------
     const favoritesContainer = document.getElementById('favoritesContainer');
     if (favoritesContainer) {
-        // Элементы фильтров
         const priceFrom = document.getElementById('priceFromProfile');
         const priceTo = document.getElementById('priceToProfile');
         const marketCheckboxes = document.querySelectorAll('#marketDropdownProfile input[type="checkbox"]');
@@ -132,72 +133,78 @@ document.addEventListener('DOMContentLoaded', () => {
         const deliveryRadios = document.querySelectorAll('input[name="deliveryRadioProfile"]');
         const sortSelect = document.getElementById('sortPriceProfile');
 
-        // Функция сбора данных из текущих карточек (всегда актуальна)
-        function getCurrentCardsData() {
-            const cards = Array.from(favoritesContainer.querySelectorAll('.product-card'));
-            return cards.map(card => {
-                // Цена (минимальная из диапазона)
-                const priceElem = card.querySelector('.card-price');
-                let price = 0;
-                if (priceElem) {
-                    const priceText = priceElem.innerText;
-                    // Ищем первое число (минимальную цену) – оно идёт до пробела или до тире
-                    const match = priceText.match(/(\d[\d\s]*?)\s*[–-]/);
-                    if (match) {
-                        price = parseInt(match[1].replace(/\s/g, '')) || 0;
-                    } else {
-                        // Если не нашли диапазон, то берём всё число
-                        price = parseInt(priceText.replace(/[^\d]/g, '')) || 0;
-                    }
+        // Функция для извлечения данных из карточки (без кэширования)
+        function getCardData(card) {
+            // Цена (минимальная из диапазона)
+            let price = 0;
+            const priceElem = card.querySelector('.card-price');
+            if (priceElem) {
+                const priceText = priceElem.innerText;
+                const match = priceText.match(/(\d[\d\s]*?)\s*[–-]/);
+                if (match) {
+                    price = parseInt(match[1].replace(/\s/g, '')) || 0;
+                } else {
+                    price = parseInt(priceText.replace(/[^\d]/g, '')) || 0;
                 }
-                // Магазин – убираем эмодзи и оставляем только название
-                const shopElem = card.querySelector('.card-meta:last-child span:last-child');
-                let shop = '';
-                if (shopElem) {
-                    shop = shopElem.innerText.replace(/[🏷️]/g, '').trim();
+            }
+
+            // Магазин – из второго блока .card-meta
+            let shop = '';
+            const shopBlocks = card.querySelectorAll('.card-meta');
+            if (shopBlocks.length >= 2) {
+                const shopSpan = shopBlocks[1].querySelector('span');
+                if (shopSpan) {
+                    shop = shopSpan.innerText.replace(/[🏷️]/g, '').trim();
                 }
-                // Доставка
-                const deliveryElem = card.querySelector('.card-meta:first-child span:last-child');
-                let deliveryDays = 9999;
-                if (deliveryElem) {
-                    const text = deliveryElem.innerText;
-                    if (text.includes('Завтра')) deliveryDays = 1;
-                    else if (text.includes('Послезавтра')) deliveryDays = 2;
+            }
+
+            // Доставка – из первого блока .card-meta, второй span
+            let deliveryDays = 9999;
+            if (shopBlocks.length >= 1) {
+                const deliverySpans = shopBlocks[0].querySelectorAll('span');
+                if (deliverySpans.length >= 2) {
+                    const deliveryText = deliverySpans[1].innerText;
+                    if (deliveryText.includes('Завтра')) deliveryDays = 1;
+                    else if (deliveryText.includes('Послезавтра')) deliveryDays = 2;
                     else {
-                        const match = text.match(/(\d+)\s*дн/);
+                        const match = deliveryText.match(/(\d+)\s*дн/);
                         if (match) deliveryDays = parseInt(match[1]);
                     }
                 }
-                return { card, price, shop, deliveryDays };
-            });
+            }
+
+            return { card, price, shop, deliveryDays };
         }
 
-        // Фильтрация и сортировка (перерисовка)
+        // Сохраняем исходный список карточек (будет обновляться при удалении)
+        function refreshAllCardsData() {
+            const cards = Array.from(favoritesContainer.querySelectorAll('.product-card'));
+            window.allCardsData = cards.map(card => getCardData(card));
+        }
+
+        // Инициализируем исходные данные
+        refreshAllCardsData();
+
+        // Фильтрация и сортировка (перерисовка из исходного списка)
         window.filterAndSort = function() {
             let minPrice = priceFrom ? parseInt(priceFrom.value) || 0 : 0;
             let maxPrice = priceTo ? parseInt(priceTo.value) || Infinity : Infinity;
             if (priceTo && priceTo.value === '') maxPrice = Infinity;
 
-            // Выбранные магазины
             let selectedShops = [];
             marketCheckboxes.forEach(cb => {
                 if (cb.checked && cb.value !== 'all') selectedShops.push(cb.value);
             });
             const isAllShops = (allCheck && allCheck.checked) || selectedShops.length === 0;
 
-            // Доставка
             let maxDelivery = 9999;
             deliveryRadios.forEach(r => {
                 if (r.checked) maxDelivery = parseInt(r.value);
             });
 
-            // Сортировка
             const sortType = sortSelect ? sortSelect.value : 'none';
 
-            // Получаем актуальные данные (без кеша)
-            let cardsData = getCurrentCardsData();
-
-            let filtered = cardsData.filter(data => {
+            let filtered = window.allCardsData.filter(data => {
                 if (data.price < minPrice || data.price > maxPrice) return false;
                 if (!isAllShops && !selectedShops.includes(data.shop)) return false;
                 if (data.deliveryDays > maxDelivery) return false;
@@ -206,9 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (sortType === 'asc') filtered.sort((a, b) => a.price - b.price);
             else if (sortType === 'desc') filtered.sort((a, b) => b.price - a.price);
-            // none – сохраняем порядок, в котором они шли в cardsData (исходный порядок в DOM)
 
-            // Перерисовка
             favoritesContainer.innerHTML = '';
             if (filtered.length === 0) {
                 favoritesContainer.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem;">⭐ Нет избранных товаров, соответствующих фильтрам.</div>';
@@ -216,18 +221,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 filtered.forEach(data => favoritesContainer.appendChild(data.card));
             }
 
-            // Заново привязываем обработчики удаления (после перерисовки)
             attachRemoveHandlers(favoritesContainer);
         };
 
-        // Навешиваем обработчики событий на фильтры
+        // Навешиваем обработчики на элементы фильтров
         if (priceFrom) priceFrom.addEventListener('input', window.filterAndSort);
         if (priceTo) priceTo.addEventListener('input', window.filterAndSort);
         marketCheckboxes.forEach(cb => cb.addEventListener('change', window.filterAndSort));
         deliveryRadios.forEach(r => r.addEventListener('change', window.filterAndSort));
         if (sortSelect) sortSelect.addEventListener('change', window.filterAndSort);
 
-        // Инициализация дропдаунов (как на главной)
+        // Инициализация дропдаунов (бургеров)
         function setupProfileDropdown(containerId, triggerSelector) {
             const container = document.getElementById(containerId);
             const trigger = container?.querySelector(triggerSelector);
@@ -261,14 +265,11 @@ document.addEventListener('DOMContentLoaded', () => {
         deliveryRadios.forEach(r => r.addEventListener('change', updateDeliveryLabel));
         updateDeliveryLabel();
 
-        // Первоначальная привязка обработчиков удаления к уже существующим карточкам
         attachRemoveHandlers(favoritesContainer);
-
-        // Выполняем фильтрацию (приведёт к сортировке по умолчанию, если нужно)
-        window.filterAndSort();
+        window.filterAndSort(); // применяем начальные фильтры (ничего не фильтруют)
     }
 
-    // ----- Удаление аккаунта с модальным подтверждением -----
+    // ---------- Удаление аккаунта с модальным подтверждением ----------
     function createDeleteConfirmModal() {
         if (document.getElementById('deleteConfirmModal')) return;
 
@@ -317,26 +318,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     justify-content: center;
                     margin-top: 1.5rem;
                 }
-                .danger-btn {
-                    background: var(--danger);
-                    border: none;
-                    color: white;
-                    padding: 0.6rem 1.2rem;
-                    border-radius: 60px;
-                    cursor: pointer;
-                }
-                .cancel-btn {
-                    background: rgba(255,255,255,0.2);
-                    border: 1px solid var(--text-muted);
-                    color: var(--text-white);
-                    padding: 0.6rem 1.2rem;
-                    border-radius: 60px;
-                    cursor: pointer;
-                }
-                @keyframes modalPop {
-                    from { transform: scale(0.9); opacity: 0; }
-                    to { transform: scale(1); opacity: 1; }
-                }
+                .danger-btn { background: var(--danger); border: none; color: white; padding: 0.6rem 1.2rem; border-radius: 60px; cursor: pointer; }
+                .cancel-btn { background: rgba(255,255,255,0.2); border: 1px solid var(--text-muted); color: var(--text-white); padding: 0.6rem 1.2rem; border-radius: 60px; cursor: pointer; }
+                @keyframes modalPop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
             </style>
         `;
         document.body.insertAdjacentHTML('beforeend', modalHTML);
@@ -345,13 +329,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const confirmBtn = document.getElementById('confirmDeleteBtn');
         const cancelBtn = document.getElementById('cancelDeleteBtn');
 
-        function closeModal() {
-            modal.style.display = 'none';
-        }
+        function closeModal() { modal.style.display = 'none'; }
 
         confirmBtn.addEventListener('click', async () => {
             closeModal();
-            // Показываем индикатор загрузки на кнопке (опционально)
             const deleteBtn = document.getElementById('deleteAccountBtn');
             const originalText = deleteBtn.innerHTML;
             deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Удаление...';
@@ -360,23 +341,14 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const response = await fetch('/hunter/delete_user/', {
                     method: 'DELETE',
-                    headers: {
-                        'X-CSRFToken': csrftoken,
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
+                    headers: { 'X-CSRFToken': csrftoken, 'X-Requested-With': 'XMLHttpRequest' }
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    if (data.status === 'success') {
-                        window.location.href = '/hunter/';
-                    } else {
-                        alert('Ошибка при удалении аккаунта');
-                    }
-                } else if (response.status === 401) {
-                    alert('Вы не авторизованы');
-                } else {
-                    alert('Ошибка сервера. Попробуйте позже.');
-                }
+                    if (data.status === 'success') window.location.href = '/hunter/';
+                    else alert('Ошибка при удалении аккаунта');
+                } else if (response.status === 401) alert('Вы не авторизованы');
+                else alert('Ошибка сервера. Попробуйте позже.');
             } catch (error) {
                 console.error(error);
                 alert('Не удалось выполнить запрос');
@@ -387,12 +359,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         cancelBtn.addEventListener('click', closeModal);
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
-        });
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
     }
 
-    // Обработчик кнопки удаления аккаунта
     const deleteAccountBtn = document.getElementById('deleteAccountBtn');
     if (deleteAccountBtn) {
         deleteAccountBtn.addEventListener('click', () => {
