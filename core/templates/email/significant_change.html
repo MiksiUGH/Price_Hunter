@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f4f7fc;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #00e676, #2d7aff);
+            padding: 20px;
+            text-align: center;
+            color: white;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 24px;
+        }
+        .alert-badge {
+            background: #ff9800;
+            color: white;
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+        .product-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 0 0 8px 0;
+            color: #1a2a3a;
+        }
+        .changes-list {
+            background: #f8f9fa;
+            border-radius: 16px;
+            padding: 16px;
+            margin: 20px 0;
+        }
+        .change-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .change-item:last-child {
+            border-bottom: none;
+        }
+        .change-icon {
+            font-size: 20px;
+        }
+        .footer {
+            background: #eef2f7;
+            padding: 16px;
+            text-align: center;
+            font-size: 12px;
+            color: #5f7f9e;
+        }
+        .button {
+            display: inline-block;
+            background: #2d7aff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 40px;
+            margin-top: 16px;
+        }
+        .result-product {
+            border-radius: 30px;
+            padding: 8px;
+            background: linear-gradient(135deg, #00e676, #2d7aff);
+        }
+        .result-product > p {
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 PriceHunter – Изменения в товаре</h1>
+        </div>
+        <div class="content">
+            <div class="alert-badge">⚠️ Срочное уведомление</div>
+            <div class="product-title">{{ product_title }}</div>
+            <p>Обнаружены изменения в отслеживаемом товаре:</p>
+            <div class="changes-list">
+                {% for change in changes %}
+                <div class="change-item">
+                    <span class="change-icon">🔔</span>
+                    <span>{{ change }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            <hr>
+            <h2 style="margin-bottom: 10px;">Полная сводка:</h2>
+            <div class="result-product">
+                <p>Актуальная цена: <strong>{{ current_price }}</strong></p>
+                <p>Срок доставки: <strong>{{ delivery_days }}</strong></p>
+                <p>Наличие: <strong>{% if in_stock %}В наличии{% else %}Нет в наличии{% endif %}</strong></p>
+            </div>
+            <div style="text-align: center;">
+                <a href="{{ product_url }}" class="button">Посмотреть товар</a>
+            </div>
+        </div>
+        <div class="footer">
+            Вы получили это письмо, потому что подписаны на уведомления об изменениях.<br>
+            Отписаться можно в настройках профиля на PriceHunter.
+        </div>
+    </div>
+</body>
+</html>

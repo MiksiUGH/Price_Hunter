@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const currencySelect = document.getElementById('currencySelect');
     const checkInterval = document.getElementById('checkInterval');
     const activateEmail = document.getElementById('activateEmail');
+    const priceChangeThreshold = document.getElementById('priceChangeThreshold');
     const saveBtn = document.getElementById('saveSettingsBtn');
 
     async function loadSettings() {
@@ -21,12 +22,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currencySelect) currencySelect.value = settings.currency || 'RUB';
             if (checkInterval) checkInterval.value = settings.check_interval || '24';
             if (activateEmail) activateEmail.value = settings.email_notifications ? 'true' : 'false';
+            if (priceChangeThreshold) priceChangeThreshold.value = settings.price_change_threshold || '10';
         } catch (error) {
             console.warn('Не удалось загрузить настройки, используются значения по умолчанию');
             if (themeSelect) themeSelect.value = 'dark';
             if (currencySelect) currencySelect.value = 'RUB';
             if (checkInterval) checkInterval.value = '24';
             if (activateEmail) activateEmail.value = 'false';
+            if (priceChangeThreshold) priceChangeThreshold.value = '10';
         }
     }
 
@@ -35,7 +38,8 @@ document.addEventListener('DOMContentLoaded', () => {
             theme: themeSelect?.value || 'dark',
             currency: currencySelect?.value || 'RUB',
             check_interval: checkInterval?.value || '24',
-            email_notifications: activateEmail?.value === 'true'
+            email_notifications: activateEmail?.value === 'true',
+            price_change_threshold: parseInt(priceChangeThreshold?.value, 10) || 10
         };
         try {
             const response = await fetch('/hunter/settings/?format=json', {

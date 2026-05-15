@@ -55,6 +55,14 @@
             </div>
         </div>
 
+        <div class="setting-row">
+            <div class="setting-label"><i class="fas fa-percent"></i> При каком изменении цены уведомлять</div>
+            <div class="setting-control">
+                <input type="number" id="priceChangeThreshold" max="100" min="1" value="{% if price_change_threshold %}{{ price_change_threshold }}{% else %}10{% endif %}">
+                <div class="note">Вы получите уведомление о изменении цены, только если она изменится на заданное вами значение в %</div>
+            </div>
+        </div>
+
         <button class="save-btn" id="saveSettingsBtn"><i class="fas fa-save"></i> Сохранить настройки</button>
     </div>
 </main>

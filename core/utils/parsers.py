@@ -3,6 +3,7 @@ import time
 import re
 import datetime
 import abc
+import logging
 
 from selenium import webdriver, common
 from selenium.webdriver.chrome.options import Options
@@ -12,12 +13,14 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 
-from django.db.models.query import QuerySet
 from fake_useragent import UserAgent
 from webdriver_manager.chrome import ChromeDriverManager
+from django.utils import timezone
+from django.db import transaction
+from decimal import Decimal
 
-from core.models import Offer
-from .string_utils import str_in_date
+from core.models import Offer, PriceHistory
+from .string_utils import clean_product_name, str_in_date
 
 
 OZON_URL: str = 'https://www.ozon.ru/search/?from_global=true&text='
@@ -165,7 +168,7 @@ class AbstractParser(abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def update_by_urls(urls: list[str]) -> list[dict[str, str | bool | float]] | None:
+    def update_and_save_batch(urls: list[str]) -> list[dict[str, str | bool | float]] | None:
         """Массовое обновление информации о нескольких товарах по их URL.
 
         :param urls: Список URL страниц товаров для обновления информации
@@ -435,26 +438,54 @@ class WbParser(AbstractParser):
             driver.quit()
 
     @staticmethod
-    def update_by_urls(urls: list[str]) -> list[dict[str, str | bool | float]] | None:
+    def update_and_save_batch(urls: set[str]) -> set[Offer | None]:
         """
         Обновляет сразу несколько товаров по их url
 
-        :param urls: Список с url обновляемых товаров
-        :type urls: list[str]
-        :return: Список с обновленной информацией о товарах
-        :rtype: list[dict[str, str | bool | float]] | None
+        :param urls: Множество с url обновляемых товаров
+        :type urls: set[str]
+        :return: Множество успешно обновленных товаров
+        :rtype: set[Offer | None]
         """
         try:
             driver: webdriver.Chrome = get_driver()
-            updated_offers: list[dict[str, str | bool | float]] = []
+            res: set[Offer] = set()
             for url in urls:
                 updated_offer = WbParser.update_by_url(driver, url)
-                if updated_offer:
-                    updated_offers.append(updated_offer)
-            return updated_offers
+                if 'error' in updated_offer:
+                    logging.error('Ошибка при парсинге(update_by_url): %s', updated_offer['error'])
+                    continue
+
+                try:
+                    with transaction.atomic():
+                        offer: Offer = Offer.objects.select_for_update().get(url=url)
+                        if offer.price != Decimal(updated_offer['new_price']) or offer.in_stock != updated_offer['availability']:
+                            _ = PriceHistory.objects.create(
+                                price=Decimal(updated_offer['new_price']),
+                                in_stock=updated_offer['availability'],
+                                offer=offer,
+                            )
+
+                        offer.price = Decimal(updated_offer['new_price'])
+                        offer.in_stock = updated_offer['availability']
+                        offer.title = clean_product_name(updated_offer.get('new_name', offer.title))
+                        offer.delivery_days = (str_in_date(updated_offer['new_delivery_time']) - datetime.date.today()).days
+                        offer.save()
+                        res.add(offer)
+
+                except Offer.DoesNotExist:
+                    logging.warning('Offer с URL %s не найден(update_and_save_batch)', url)
+                    continue
+
+                except Exception as e:
+                    logging.error('Ошибка при обновлении данных предложения(update_and_save_batch): %s', e)
+                    continue
+
+            return res
 
         except Exception as e:
-            return {'error': e}
+            logging.error('Ошибка в работе update_and_save_batch: %s', e)
+            return res
 
         finally:
             driver.quit()
@@ -481,25 +512,22 @@ class WbParser(AbstractParser):
                 WebDriverWait(dr, 12).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'span.sellerInfoNameDefaultText--qLwgq')))
 
                 availability: bool = WbParser._update_availability(dr)
-                if availability:
+                new_name: str = dr.find_element(By.CSS_SELECTOR, 'h2.productTitle--lfc4o').text
+                try:
+                    new_price: float | None = price_in_float(dr.find_element(By.CSS_SELECTOR, 'h2.mo-typography_color_danger').text)
+                except common.NoSuchElementException:
                     try:
-                        new_price: float | None = price_in_float(dr.find_element(By.CSS_SELECTOR, 'h2.mo-typography_color_danger').text)
+                        new_price = price_in_float(dr.find_element(By.CSS_SELECTOR, 'h2.mo-typography_color_accent').text)
                     except common.NoSuchElementException:
-                        try:
-                            new_price = price_in_float(dr.find_element(By.CSS_SELECTOR, 'h2.mo-typography_color_accent').text)
-                        except common.NoSuchElementException:
-                            new_price = price_in_float(dr.find_element(By.CSS_SELECTOR, 'ins.priceBlockFinalPrice--iToZR').text)
+                        new_price = price_in_float(dr.find_element(By.CSS_SELECTOR, 'ins.priceBlockFinalPrice--iToZR').text)
+                new_delivery_time: str = dr.find_element(By.CSS_SELECTOR, 'div.deliveryTitleWrapper--WMRNu > span').text
 
-                    new_delivery_time: str = dr.find_element(By.CSS_SELECTOR, 'div.deliveryTitleWrapper--WMRNu > span').text
-                    result: dict[str, bool | float] = {
-                        'new_price': new_price,
-                        'availability': availability,
-                        'new_delivery_time': new_delivery_time.strip().replace(',', ''),
-                    }
-                else:
-                    result = {
-                        'availability': availability,
-                    }
+                result: dict[str, bool | float] = {
+                    'new_name': new_name,
+                    'new_price': new_price,
+                    'availability': availability,
+                    'new_delivery_time': new_delivery_time.strip().replace(',', ''),
+                }
 
                 return result
 

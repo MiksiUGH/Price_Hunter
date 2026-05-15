@@ -445,7 +445,6 @@ class FavoritesView(View):
         
         Если подписка ещё не существует – создаётся новая с is_active=True.
         Если подписка уже есть, но неактивна – активируется.
-        Поля target_price и last_notified_price остаются None.
 
         :param request: Http-запрос
         :type request: HttpRequest
@@ -463,8 +462,8 @@ class FavoritesView(View):
                 user=request.user,
                 offer=offer,
                 defaults={
-                    'target_price': None,
-                    'last_notified_price': None,
+                    'last_notified_price': offer.price,
+                    'last_notified_delivery_days': offer.delivery_days,
                     'is_active': True,
                 }
             )
@@ -557,7 +556,8 @@ class ProfileView(View):
 
 class SettingsView(View):
     """
-    Управление пользовательскими настройками (тема, валюта, интервал проверок, email-уведомления).
+    Управление пользовательскими настройками (тема, валюта, интервал проверок,
+    email-уведомления, порог изменения цены).
     
     GET /settings/ - получение текущих настроек пользователя.
     PUT /settings/ - изменение текущих настроек пользователя.
@@ -585,6 +585,7 @@ class SettingsView(View):
                     'currency': settings.currency,
                     'check_interval': settings.check_interval,
                     'email_notifications': settings.email_notifications,
+                    'price_change_threshold': settings.price_change_threshold,
                 }
                 return JsonResponse(json_settings, status=200)
             else:
@@ -594,6 +595,7 @@ class SettingsView(View):
                     'currency': settings.currency,
                     'check_interval': settings.check_interval,
                     'email_notifications': settings.email_notifications,
+                    'price_change_threshold': settings.price_change_threshold,
                 }
                 return render(request, 'core/settings.html', context)
 
@@ -635,9 +637,15 @@ class SettingsView(View):
                 if isinstance(val, bool):
                     settings.email_notifications = val
                 elif isinstance(val, str):
-                    settings.email_notifications = (val.lower() == 'true')
+                    settings.email_notifications = val.lower() == 'true'
                 else:
                     settings.email_notifications = bool(val)
+            try:
+                threshold = int(new_settings['price_change_threshold'])
+                if 1 <= threshold <= 100:
+                    settings.price_change_threshold = threshold
+            except (ValueError, TypeError):
+                pass
 
             settings.save()
             return JsonResponse({'status': 'ok', 'updated': True}, status=200)

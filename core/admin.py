@@ -36,7 +36,7 @@ class PriceHistoryAdmin(admin.ModelAdmin):
 
 class SubscriptionAdmin(admin.ModelAdmin):
     """Настройка отображения подписок в админке"""
-    list_display = ['user', 'offer', 'target_price', 'notify_on_drop', 'is_active', 'created_at']
+    list_display = ['user', 'offer', 'notify_on_drop', 'is_active', 'created_at']
     list_filter = ['is_active', 'notify_on_drop', 'notify_on_restore', 'created_at']
     search_fields = ['user__username', 'user__email', 'offer__product__name']
     raw_id_fields = ['user', 'offer']
@@ -44,7 +44,10 @@ class SubscriptionAdmin(admin.ModelAdmin):
 
 class UserSettingAdmin(admin.ModelAdmin):
     """Настройка отображения пользовательских настроек в админке"""
-    list_display = ['user', 'currency', 'check_interval', 'email_notifications']
+    list_display = [
+        'user', 'currency', 'check_interval', 'last_checked_at',
+        'email_notifications', 'price_change_threshold'
+    ]
 
 
 admin.site.register(Shop, ShopAdmin)

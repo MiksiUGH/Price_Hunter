@@ -107,15 +107,15 @@ class Subscription(models.Model):
     """
     Модель подписки на предложение
     """
-    target_price = models.DecimalField(
-        'Цена', max_digits=10, decimal_places=2,
-        null=True, blank=True
-    )
     notify_on_drop = models.BooleanField('Уведомлять при снижении цены', default=True)
     notify_on_restore = models.BooleanField('Уведомлять при появлении в наличии', default=True)
     last_notified_price = models.DecimalField(
         'Цена при прошлом уведомлении', max_digits=10,
         decimal_places=2, null=True, blank=True
+    )
+    last_notified_delivery_days = models.PositiveSmallIntegerField(
+        'Срок доставки при прошлом уведомление',
+        null=True, blank=True
     )
     is_active = models.BooleanField('Активность', default=True)
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
@@ -160,6 +160,15 @@ class UserSetting(models.Model):
         help_text='Частота проверки (часы)'
     )
     email_notifications = models.BooleanField(default=False)
+    price_change_threshold = models.PositiveSmallIntegerField(
+        default=10,
+        help_text='При каком изменении цены уведомлять (%)'
+    )
+    last_checked_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Когда последний раз обновлялись данные о товарах',
+    )
 
     user = models.OneToOneField(
         User,

@@ -56,7 +56,6 @@ def subscription(db, user, offer):
     return Subscription.objects.create(
         user=user,
         offer=offer,
-        target_price=None,
         last_notified_price=None,
         notify_on_drop=False,
         notify_on_restore=False,
