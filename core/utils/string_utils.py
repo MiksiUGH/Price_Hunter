@@ -80,31 +80,17 @@ def clean_product_name(name: str) -> str:
     - Удаляет артикулы в круглых скобках (чисто цифры)
     - Удаляет содержимое квадратных скобок (включая сами скобки)
     - Убирает лишние пробелы
-    - Удаляет повторяющиеся слова (игнорируя регистр)
     """
     if not name:
         return ''
 
     # Удаляем начальные символы: / - . и пробелы
-    name = re.sub(r'^[\s/\.\-]+', '', name)
+    name = re.sub(r'^[\s/\.\-\,]+', '', name)
     # Удаляем артикулы в круглых скобках (только цифры, возможно с пробелом)
     name = re.sub(r'\s*\(\s*\d+\s*\)', '', name)
     # Удаляем квадратные скобки с содержимым (например, [White Blue Colour-In])
     name = re.sub(r'\s*\[[^\]]*\]', '', name)
 
-    # Извлекаем слова для обработки дубликатов
-    words = re.findall(r'\w+', name)
-    seen = set()
-    unique_words = []
-
-    for word in words:
-        if word.lower() not in seen:
-            seen.add(word.lower())
-            unique_words.append(word)
-
-    # Восстанавливаем строку из уникальных слов
-    cleaned_name = ' '.join(unique_words)
-
     # Убираем лишние пробелы и возвращаем результат
-    cleaned_name = re.sub(r'\s+', ' ', cleaned_name)
+    cleaned_name = re.sub(r'\s+', ' ', name)
     return cleaned_name.strip()

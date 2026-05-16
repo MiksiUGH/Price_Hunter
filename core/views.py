@@ -1,6 +1,5 @@
 """Файл со всеми вьюхами приложения"""
 from urllib.parse import urlparse
-from difflib import SequenceMatcher
 from json import loads
 
 from django.http import HttpRequest, HttpResponse, JsonResponse
@@ -12,6 +11,7 @@ from django.contrib.auth import login, logout
 from django.urls import reverse_lazy
 from django.contrib.auth.views import PasswordChangeView
 from django.views.decorators.http import require_http_methods, require_GET
+from rapidfuzz import fuzz
 
 from core.utils.parsers import OzonParser, WbParser, YandexMarketParser, AbstractParser
 from core.models import Product, Shop, Offer, Subscription, UserSetting
@@ -104,7 +104,7 @@ def check_product_on_filters(p: Product, filters: dict[str, int | set[str]]) -> 
     return offers.exists()
 
 
-def check_name_matches(name1: str, name2: str, best_ratio: float = 0.8) -> bool:
+def check_name_matches(name1: str, name2: str, best_ratio: float = 0.7) -> bool:
     """
     Сравнивает два имени с помощью SequenceMatcher и возвращает True,
     если коэффициент схожести >= заданного порога.
@@ -113,15 +113,13 @@ def check_name_matches(name1: str, name2: str, best_ratio: float = 0.8) -> bool:
     :type name1: str
     :param name2: Второе имя
     :type name2: str
-    :param best_ratio: Порог схожести, default 0.8
+    :param best_ratio: Порог схожести, default 0.95
     :type best_ratio: float
     :return: True, если имена схожи
     :rtype: bool
     """
-    ratio = SequenceMatcher(None, name1, name2).ratio()
-    if ratio >= best_ratio:
-        return True
-    return False
+    ratio = fuzz.token_sort_ratio(name1, name2) / 100.0
+    return ratio >= best_ratio
 
 
 # Основные view-функции

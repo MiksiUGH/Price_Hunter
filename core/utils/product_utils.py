@@ -1,15 +1,15 @@
 """Утилиты для работы с продуктами (поиск, создание, обновление)"""
-from difflib import SequenceMatcher
 from datetime import timedelta, date
 
 from django.utils import timezone
 from django.utils.text import slugify
+from rapidfuzz import fuzz
 
 from core.models import Product, Offer, Shop, PriceHistory
 from core.utils.string_utils import normalize_name, str_in_date, clean_product_name
 
 
-def get_or_create_product_by_name(name: str, similarity_threshold: float = 0.65) -> Product:
+def get_or_create_product_by_name(name: str, similarity_threshold: float = 0.77) -> Product:
     """
     Находит существующий Product по нормализованному имени или создаёт новый.
     Сначала ищет точное совпадение normalized_name, затем нечёткое (difflib).
@@ -17,32 +17,29 @@ def get_or_create_product_by_name(name: str, similarity_threshold: float = 0.65)
 
     :param name: Исходное название товара (от парсера)
     :type name: str
-    :param similarity_threshold: Порог схожести для нечёткого поиска (0..1)
+    :param similarity_threshold: Порог схожести для нечёткого поиска (0..1), default 0.77
     :type similarity_threshold: float
     :return: Объект Product (существующий или новый)
     :rtype: Product
     """
     cleaned_name = clean_product_name(name)
+    if not cleaned_name:
+        cleaned_name = name or "Unknown product"
+
     normalized = normalize_name(cleaned_name)
     product = Product.objects.filter(normalized_name=normalized).first()
     if product:
-        if product.name != cleaned_name:
-            product.name = cleaned_name
-            product.save()
         return product
 
     all_products = Product.objects.all()
     best_match = None
     best_ratio = 0.0
     for p in all_products:
-        ratio = SequenceMatcher(None, normalized, p.normalized_name).ratio()
+        ratio = fuzz.token_sort_ratio(normalized, p.normalized_name) / 100.0
         if ratio > best_ratio:
             best_ratio = ratio
             best_match = p
     if best_match and best_ratio >= similarity_threshold:
-        if best_match.name != cleaned_name:
-            best_match.name = cleaned_name
-            best_match.save()
         return best_match
 
     base_slug = slugify(cleaned_name)

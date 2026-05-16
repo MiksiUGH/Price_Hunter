@@ -5,6 +5,11 @@ import datetime
 import abc
 import logging
 
+from decimal import Decimal
+from fake_useragent import UserAgent
+from webdriver_manager.chrome import ChromeDriverManager
+from django.db import transaction
+
 from selenium import webdriver, common
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
@@ -12,12 +17,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
-
-from fake_useragent import UserAgent
-from webdriver_manager.chrome import ChromeDriverManager
-from django.utils import timezone
-from django.db import transaction
-from decimal import Decimal
 
 from core.models import Offer, PriceHistory
 from .string_utils import clean_product_name, str_in_date
@@ -64,7 +63,7 @@ def get_chrome_options() -> Options:
     options.add_argument('--window-size=1920,1080')
 
     # 8. Если нужен headless — раскомментируй, но для отладки лучше видимый браузер
-    options.add_argument('--headless')
+    # options.add_argument('--headless')
 
     # 9. Отключаем сохранение паролей и автозаполнение
     options.add_argument('--disable-save-password-bubble')
@@ -344,7 +343,7 @@ class WbParser(AbstractParser):
                     cards = driver.find_elements(By.CSS_SELECTOR, 'article.product-card')[left:right]
                     if not cards:
                         break
-                    driver.execute_script("arguments.scrollIntoView(true);", cards[0])
+                    driver.execute_script("arguments[0].scrollIntoView(true);", cards[0])
                     for card in cards:
                         if res_cnt == 0:
                             break

@@ -18,6 +18,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const marketCheckboxes = document.querySelectorAll('#marketMultiSelect .multi-dropdown input[type="checkbox"]');
     const allCheck = document.getElementById('marketAll');
 
+    // Функция для инициализации выпадающих списков
+    function setupDropdown(container, trigger) {
+        if (!container || !trigger) return;
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Закрываем все другие открытые дропдауны
+            document.querySelectorAll('.filter-card.open').forEach(card => {
+                if (card !== container) card.classList.remove('open');
+            });
+            container.classList.toggle('open');
+        });
+        // Закрытие при клике вне дропдауна
+        document.addEventListener('click', (e) => {
+            if (!container.contains(e.target)) container.classList.remove('open');
+        });
+    }
+
+    // Инициализация дропдаунов на главной странице
+    const marketContainer = document.getElementById('marketMultiSelect');
+    const marketTrigger = marketContainer?.querySelector('.multi-select-trigger');
+    if (marketContainer && marketTrigger) setupDropdown(marketContainer, marketTrigger);
+
+    const deliveryContainer = document.getElementById('deliverySelect');
+    const deliveryTrigger = deliveryContainer?.querySelector('.delivery-trigger');
+    if (deliveryContainer && deliveryTrigger) setupDropdown(deliveryContainer, deliveryTrigger);
+
     // Функция для получения выбранных маркетплейсов
     function getSelectedMarkets() {
         const selected = [];
@@ -82,21 +108,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Привязываем обработчики к фильтрам (изменение любого фильтра вызывает поиск)
-    if (priceFrom) priceFrom.addEventListener('input', performSearch);
-    if (priceTo) priceTo.addEventListener('input', performSearch);
-    deliveryRadios.forEach(r => r.addEventListener('change', performSearch));
     marketCheckboxes.forEach(cb => cb.addEventListener('change', () => {
         if (allCheck && allCheck.checked && cb.value !== 'all') {
             allCheck.checked = false;
         }
-        performSearch();
     }));
     if (allCheck) {
         allCheck.addEventListener('change', (e) => {
             marketCheckboxes.forEach(cb => {
                 if (cb !== allCheck) cb.checked = e.target.checked;
             });
-            performSearch();
         });
     }
 
@@ -112,6 +133,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.key === 'Enter') performSearch();
         });
     }
+
+    // Обновление текста выбранной доставки (только визуально, без поиска)
+    deliveryRadios.forEach(r => r.addEventListener('change', updateDeliveryLabel));
 
     // Обновление текста выбранной доставки в дропдауне
     function updateDeliveryLabel() {

@@ -1,117 +1,102 @@
 .instruction-container {
     max-width: 1000px;
-    margin: 0 auto;
-    padding: 1.5rem;
+    margin: 2rem auto;
+    padding: 0 1rem;
 }
 .hero-instruction {
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: 2.5rem;
 }
 .hero-instruction h1 {
     font-size: 2.5rem;
-    background: linear-gradient(125deg, var(--text-white), var(--primary-green), var(--primary-blue));
+    background: linear-gradient(135deg, #00e676, #2d7aff);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+    margin-bottom: 0.5rem;
+}
+.hero-instruction p {
+    color: var(--text-muted);
+    font-size: 1.1rem;
 }
 .step-card {
     background: var(--card-bg);
-    backdrop-filter: blur(8px);
     border-radius: 28px;
     padding: 1.5rem;
     margin-bottom: 1.5rem;
-    border: 1px solid rgba(0, 255, 170, 0.15);
-    transition: 0.2s;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    border: 1px solid var(--border-color);
+    transition: transform 0.2s;
 }
 .step-card:hover {
-    border-color: var(--primary-green);
-    transform: translateY(-2px);
+    transform: translateY(-3px);
 }
 .step-header {
     display: flex;
     align-items: center;
     gap: 1rem;
     margin-bottom: 1rem;
-    flex-wrap: wrap;
+    border-bottom: 2px solid var(--primary-green);
+    padding-bottom: 0.75rem;
 }
 .step-number {
-    background: linear-gradient(135deg, var(--primary-green), var(--primary-blue));
     width: 40px;
     height: 40px;
+    background: var(--primary-green);
+    color: white;
     border-radius: 50%;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
     font-size: 1.2rem;
-    color: #000;
 }
 .step-title {
     font-size: 1.4rem;
-    font-weight: bold;
-    color: var(--primary-green);
+    font-weight: 600;
+    color: var(--text-white);
 }
 .step-content {
     color: var(--text-muted);
-    line-height: 1.6;
-    padding-left: 3.5rem;
+    line-height: 1.5;
+    padding-left: 0.5rem;
 }
 .step-content ul {
-    margin-top: 0.5rem;
-    padding-left: 1.2rem;
+    margin: 0.5rem 0 0 1.5rem;
+    list-style-type: disc;
 }
 .step-content li {
     margin: 0.5rem 0;
 }
 .faq-section {
-    margin-top: 2rem;
-    background: rgba(0,0,0,0.3);
+    background: var(--card-bg);
     border-radius: 28px;
     padding: 1.5rem;
+    margin-top: 2rem;
+    border: 1px solid var(--border-color);
 }
 .faq-question {
-    font-weight: bold;
+    font-weight: 600;
+    margin-top: 1rem;
     color: var(--primary-green);
-    margin: 1rem 0 0.5rem;
 }
-@media (max-width: 767px) {
-    .instruction-container { padding: 1rem; }
-    .step-content { padding-left: 1rem; }
-    .step-title { font-size: 1.2rem; }
+.badge-icon {
+    background: rgba(0,230,118,0.2);
+    padding: 0.2rem 0.6rem;
+    border-radius: 40px;
+    font-size: 0.8rem;
+    display: inline-block;
+    margin-left: 0.5rem;
 }
-.step-card {
-    opacity: 0;
-    transform: translateY(25px);
-    animation: stepFadeUp 0.5s forwards;
+@media (max-width: 640px) {
+    .step-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .hero-instruction h1 {
+        font-size: 1.8rem;
+    }
 }
-@keyframes stepFadeUp {
-    to { opacity: 1; transform: translateY(0); }
-}
-.step-card:nth-child(1) { animation-delay: 0.1s; }
-.step-card:nth-child(2) { animation-delay: 0.2s; }
-.step-card:nth-child(3) { animation-delay: 0.3s; }
-.step-card:nth-child(4) { animation-delay: 0.4s; }
-.step-card:nth-child(5) { animation-delay: 0.5s; }
-.step-card:hover {
-    transform: translateY(-5px) scale(1.01);
-    transition: all 0.2s;
-    border-color: var(--primary-green);
-}
-.hero-instruction h1 {
-    animation: glow 1.5s ease-in-out infinite alternate;
-}
-@keyframes glow {
-    from { text-shadow: 0 0 5px rgba(0,230,118,0.3); }
-    to { text-shadow: 0 0 20px rgba(0,230,118,0.7); }
-}
-.faq-section {
-    animation: fadeIn 0.7s ease-out 0.6s forwards;
-    opacity: 0;
-}
-.faq-question {
-    transition: color 0.2s;
-}
-.faq-question:hover {
-    color: var(--primary-green);
-    cursor: pointer;
+hr {
+    margin-top: 10px;
 }

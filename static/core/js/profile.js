@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!offerId) return;
 
         try {
-            const response = await fetch(`/hunter/favorites/${offerId}/`, {
+            const response = await fetch(`/hunter/favorites/${offerId}`, {
                 method: 'DELETE',
                 headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' }
             });
