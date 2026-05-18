@@ -4,7 +4,6 @@ from collections import defaultdict
 from django.core.management.base import BaseCommand
 from django.db.models import QuerySet
 from django.utils import timezone
-from django.utils.safestring import SafeText
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 

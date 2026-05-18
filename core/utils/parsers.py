@@ -63,7 +63,7 @@ def get_chrome_options() -> Options:
     options.add_argument('--window-size=1920,1080')
 
     # 8. Если нужен headless — раскомментируй, но для отладки лучше видимый браузер
-    # options.add_argument('--headless')
+    options.add_argument('--headless')
 
     # 9. Отключаем сохранение паролей и автозаполнение
     options.add_argument('--disable-save-password-bubble')

@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async () => {
-            const response = await fetch('/hunter/logout/', {
+            const response = await fetch('/hunter/logout', {
                 method: 'POST',
                 headers: { 'X-CSRFToken': csrftoken }
             });
@@ -339,7 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
             deleteBtn.disabled = true;
 
             try {
-                const response = await fetch('/hunter/delete_user/', {
+                const response = await fetch('/hunter/delete_user', {
                     method: 'DELETE',
                     headers: { 'X-CSRFToken': csrftoken, 'X-Requested-With': 'XMLHttpRequest' }
                 });

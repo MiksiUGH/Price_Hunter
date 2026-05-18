@@ -9,7 +9,7 @@ from core.models import Product, Offer, Shop, PriceHistory
 from core.utils.string_utils import normalize_name, str_in_date, clean_product_name
 
 
-def get_or_create_product_by_name(name: str, similarity_threshold: float = 0.77) -> Product:
+def get_or_create_product_by_name(name: str, similarity_threshold: float = 0.7) -> Product:
     """
     Находит существующий Product по нормализованному имени или создаёт новый.
     Сначала ищет точное совпадение normalized_name, затем нечёткое (difflib).

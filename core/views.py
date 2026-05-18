@@ -212,8 +212,6 @@ def query_search(request: HttpRequest) -> HttpResponse:
         return render(request, 'core/partials/search_results.html', context={"products": best_matches[:30]})
 
     except Exception:
-        import traceback
-        traceback.print_exc()
         return HttpResponse(status=500)
 
 

@@ -64,7 +64,7 @@
 .logout-btn {
     background: rgba(255,94,126,0.2);
     border: 1px solid var(--danger);
-    color: #ff9eae;
+    color: var(--danger);
     margin-top: 1rem;
 }
 .delete-account-btn {
