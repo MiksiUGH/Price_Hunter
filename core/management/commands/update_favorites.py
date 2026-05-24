@@ -2,12 +2,12 @@
 from collections import defaultdict
 
 from django.core.management.base import BaseCommand
-from django.db.models import QuerySet
 from django.utils import timezone
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
+from django.conf import settings
 
-from core.models import Subscription, UserSetting, PriceHistory, Offer
+from core.models import Subscription, UserSetting
 
 
 CURRENCY_SYMBOLS: dict[str, str] = {
@@ -54,11 +54,11 @@ class Command(BaseCommand):
             user_subs_map[sub.user].append(sub)
 
         for user, subs in user_subs_map.items():
-            settings = user.settings
-            if not settings.email_notifications:
+            user_settings: UserSetting = user.settings
+            if not user_settings.email_notifications:
                 continue
 
-            currency_sym = CURRENCY_SYMBOLS.get(settings.currency, '₽')
+            currency_sym = CURRENCY_SYMBOLS.get(user_settings.currency, '₽')
 
             for sub in subs:
                 check_offer = sub.offer
@@ -82,7 +82,7 @@ class Command(BaseCommand):
                 price_change = False
                 if sub.last_notified_price is not None:
                     percent_change = abs(check_offer.price - sub.last_notified_price) / sub.last_notified_price * 100
-                    if percent_change >= settings.price_change_threshold:
+                    if percent_change >= user_settings.price_change_threshold:
                         price_change = True
 
                 histories = offer_histories.get(check_offer.id, [])
@@ -118,8 +118,8 @@ class Command(BaseCommand):
                     }
                     html_body = render_to_string('email/significant_change.html', html_context)
 
-                elif (settings.last_checked_at is None or
-                    (timezone.now() - settings.last_checked_at).total_seconds() / 3600 >= settings.check_interval):
+                elif (user_settings.last_checked_at is None or
+                    (timezone.now() - user_settings.last_checked_at).total_seconds() / 3600 >= user_settings.check_interval):
                     summary_lines = [
                         f"Цена: {price_with_currency}",
                         f"Срок доставки: {delivery_text}",
@@ -150,7 +150,7 @@ class Command(BaseCommand):
                     # Обновляем данные после отправки
                     sub.last_notified_price = check_offer.price
                     sub.last_notified_delivery_days = check_offer.delivery_days
-                    settings.last_checked_at = timezone.now()
+                    user_settings.last_checked_at = timezone.now()
 
                     sub.save(update_fields=['last_notified_price', 'last_notified_delivery_days'])
-                    settings.save(update_fields=['last_checked_at'])
+                    user_settings.save(update_fields=['last_checked_at'])
