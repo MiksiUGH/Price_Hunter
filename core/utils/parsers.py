@@ -58,6 +58,8 @@ def get_chrome_options() -> Options:
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--disable-gpu')
     options.add_argument('--disable-setuid-sandbox')
+    options.add_argument('--disable-software-rasterizer')
+    options.add_argument('--remote-debugging-port=9222')
 
     # 7. Имитация экрана (чтобы не было fingerprint)
     options.add_argument('--window-size=1920,1080')
